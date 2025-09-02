@@ -1,10 +1,15 @@
 const db = require('../config/db');
 
 // קבלת כל המכשירים עם פאגינציה וסינון
-const getAll = async (limit, offset, sort, searchTerm, categoryId, subcategoryId) => {
-    // רשימת שדות מיון מותרים למניעת SQL Injection
-    const validSortFields = ['id', 'name', 'manufacturer', 'model'];
-    const sortField = validSortFields.includes(sort) ? sort : 'id';
+const getAll = async (limit, offset, sort, dir, searchTerm, categoryId, subcategoryId) => {
+    const allowedSortColumns = {
+        'id': 'id',
+        'name': 'name',
+        'manufacturer': 'manufacturer',
+        'model': 'model'
+    };
+    const sortField = allowedSortColumns[sort] || 'id';
+    const sortDirection = dir === 'DESC' ? 'DESC' : 'ASC';
 
     let baseQuery = `SELECT * FROM devices`;
     let countQuery = `SELECT COUNT(*) FROM devices`;
@@ -38,7 +43,7 @@ const getAll = async (limit, offset, sort, searchTerm, categoryId, subcategoryId
     }
 
     // הוספת מיון, לימיט ואופסט לשאילתה הראשית
-    baseQuery += ` ORDER BY ${sortField} LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    baseQuery += ` ORDER BY ${sortField} ${sortDirection} LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     values.push(limit, offset);
 
     // ביצוע השאילתות

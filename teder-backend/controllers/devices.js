@@ -35,11 +35,12 @@ const createDevice = async (req, res) => {
 
 // קבלת כל המכשירים
 const getAllDevices = async (req, res) => {
-    // סכימת ולידציה לפרמטרי ה-query
+    // סכימת ולידציה לפרמטרי ה-query, כולל dir חדש
     const querySchema = Joi.object({
         limit: Joi.number().integer().min(1).default(10),
         page: Joi.number().integer().min(1).default(1),
         sort: Joi.string().valid('id', 'name', 'manufacturer', 'model').default('id'),
+        dir: Joi.string().valid('ASC', 'DESC').default('ASC'), // הוספנו ולידציה לכיוון המיון
         search: Joi.string().allow(''),
         categoryId: Joi.number().integer(),
         subcategoryId: Joi.number().integer(),
@@ -51,10 +52,10 @@ const getAllDevices = async (req, res) => {
         throw new ApiError(400, error.details[0].message);
     }
 
-    const { limit, page, sort, search, categoryId, subcategoryId } = value;
+    const { limit, page, sort, dir, search, categoryId, subcategoryId } = value;
     const offset = (page - 1) * limit;
 
-    const result = await deviceModel.getAll(limit, offset, sort, search, categoryId, subcategoryId);
+    const result = await deviceModel.getAll(limit, offset, sort, dir, search, categoryId, subcategoryId);
     
     res.status(200).json({
         total: result.total,

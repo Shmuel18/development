@@ -2,33 +2,42 @@ const express = require('express');
 const app = express();
 const helmet = require('helmet');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 const port = process.env.PORT || 3000;
 const devicesRouter = require('./routes/devices');
 const categoriesRouter = require('./routes/categories');
 const subcategoriesRouter = require('./routes/subcategories');
-const attachmentsRouter = require('./routes/attachments'); // הוספה: ייבוא הראוטר החדש
+const attachmentsRouter = require('./routes/attachments');
 const ApiError = require('./utils/ApiError');
+
+// הגדרת Rate Limiter למניעת התקפות Brute-Force
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 דקות
+    max: 300, // הגבלה של 300 בקשות ל-IP בפרק הזמן
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 app.use(express.json());
 app.use(helmet());
 app.use(cors());
+app.use(limiter);
+app.use(morgan('dev'));
 
 app.use('/api/devices', devicesRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/subcategories', subcategoriesRouter);
-app.use('/api', attachmentsRouter); // הוספה: שימוש בראוטר החדש
+app.use('/api', attachmentsRouter);
 
 app.get('/', (req, res) => {
     res.send('ברוכים הבאים לבק-אנד של "תדר"!');
 });
 
 // Middleware לטיפול בנתיבים לא קיימים (404 Not Found)
+// התיקון המדויק שהצעת עבור Express 5
 app.use((req, res, next) => {
-    res.status(404).json({
-        success: false,
-        error: "אירעה שגיאה",
-        message: 'הנתיב לא נמצא'
-    });
+    next(new ApiError(404, 'הנתיב לא נמצא'));
 });
 
 // Middleware לטיפול בשגיאות כלליות
