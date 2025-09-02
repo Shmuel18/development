@@ -66,13 +66,21 @@ const getDeviceById = async (req, res) => {
 // עדכון מכשיר קיים (PATCH)
 const updateDevice = async (req, res) => {
     const deviceId = req.params.id;
-    const allowed = ['name', 'manufacturer', 'model', 'frequency_range', 'year', 'security_classification', 'description', 'category_id', 'subcategory_id'];
     
-    const { error, value } = Joi.object(
-        Object.fromEntries(
-            Object.entries(req.body).filter(([key]) => allowed.includes(key))
-        )
-    ).validate(req.body);
+    // סכימת ולידציה עבור עדכון - כל השדות אופציונליים
+    const updateSchema = Joi.object({
+        name: Joi.string().min(3),
+        manufacturer: Joi.string(),
+        model: Joi.string(),
+        frequency_range: Joi.string().allow(null, ''),
+        year: Joi.number().integer().min(1900).max(new Date().getFullYear()).allow(null),
+        security_classification: Joi.string().allow(null, ''),
+        description: Joi.string().allow(null, ''),
+        category_id: Joi.number().integer(),
+        subcategory_id: Joi.number().integer(),
+    }).min(1); // לפחות שדה אחד חייב להישלח
+
+    const { error, value } = updateSchema.validate(req.body);
     
     if (error) {
         throw new ApiError(400, error.details[0].message);
@@ -81,10 +89,6 @@ const updateDevice = async (req, res) => {
     const updates = Object.keys(value)
         .map((key, index) => `${key} = $${index + 1}`)
         .join(', ');
-
-    if (!updates) {
-        throw new ApiError(400, 'שגיאה: יש לספק נתונים תקינים לעדכון');
-    }
     
     const values = Object.values(value);
     values.push(deviceId);

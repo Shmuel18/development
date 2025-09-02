@@ -2,11 +2,15 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const devicesRouter = require('./routes/devices');
+const categoriesRouter = require('./routes/categories');
+const subcategoriesRouter = require('./routes/subcategories');
 const ApiError = require('./utils/ApiError');
 
 app.use(express.json());
 
 app.use('/api/devices', devicesRouter);
+app.use('/api/categories', categoriesRouter);
+app.use('/api/subcategories', subcategoriesRouter);
 
 app.get('/', (req, res) => {
     res.send('ברוכים הבאים לבק-אנד של "תדר"!');
