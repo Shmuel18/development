@@ -27,13 +27,19 @@ const update = async (id, name) => {
 
 // מחיקת קטגוריה
 const remove = async (id) => {
+    // בצע מחיקה של המכשירים המשויכים לקטגוריה
+    const devicesResult = await db.query('DELETE FROM devices WHERE category_id = $1 RETURNING *', [id]);
+
     // בצע מחיקה גם של תתי-הקטגוריות המשויכות אליה
     const subcategoriesResult = await db.query('DELETE FROM subcategories WHERE category_id = $1 RETURNING *', [id]);
+    
+    // לבסוף, מחק את הקטגוריה עצמה
     const categoryResult = await db.query('DELETE FROM categories WHERE id = $1 RETURNING *', [id]);
     
     return {
         category: categoryResult.rows[0],
-        subcategories: subcategoriesResult.rows
+        subcategories: subcategoriesResult.rows,
+        devices: devicesResult.rows
     };
 };
 

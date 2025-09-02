@@ -7,7 +7,7 @@ const asyncHandler = (fn) => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// סכימת ולידציה באמצעות Joi
+// סכימת ולידציה ליצירה ועדכון
 const deviceSchema = Joi.object({
     name: Joi.string().min(3).required(),
     manufacturer: Joi.string().required(),
@@ -35,18 +35,31 @@ const createDevice = async (req, res) => {
 
 // קבלת כל המכשירים
 const getAllDevices = async (req, res) => {
-    const { limit = 10, page = 1, sort = 'id', search = '' } = req.query;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    const validSortFields = ['id', 'name', 'manufacturer', 'model'];
-    const sortField = validSortFields.includes(sort) ? sort : 'id';
-    const searchTerm = `%${search}%`;
+    // סכימת ולידציה לפרמטרי ה-query
+    const querySchema = Joi.object({
+        limit: Joi.number().integer().min(1).default(10),
+        page: Joi.number().integer().min(1).default(1),
+        sort: Joi.string().valid('id', 'name', 'manufacturer', 'model').default('id'),
+        search: Joi.string().allow(''),
+        categoryId: Joi.number().integer(),
+        subcategoryId: Joi.number().integer(),
+    });
 
-    const result = await deviceModel.getAll(parseInt(limit), offset, sortField, searchTerm);
+    const { error, value } = querySchema.validate(req.query);
+
+    if (error) {
+        throw new ApiError(400, error.details[0].message);
+    }
+
+    const { limit, page, sort, search, categoryId, subcategoryId } = value;
+    const offset = (page - 1) * limit;
+
+    const result = await deviceModel.getAll(limit, offset, sort, search, categoryId, subcategoryId);
     
     res.status(200).json({
         total: result.total,
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         devices: result.devices
     });
 };
