@@ -9,6 +9,7 @@ const devicesRouter = require('./routes/devices');
 const categoriesRouter = require('./routes/categories');
 const subcategoriesRouter = require('./routes/subcategories');
 const attachmentsRouter = require('./routes/attachments');
+const authRouter = require('./routes/auth'); // ייבוא הראוטר החדש לאימות
 const ApiError = require('./utils/ApiError');
 
 // הגדרת Rate Limiter למניעת התקפות Brute-Force
@@ -29,13 +30,13 @@ app.use('/api/devices', devicesRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/subcategories', subcategoriesRouter);
 app.use('/api', attachmentsRouter);
+app.use('/api/auth', authRouter); // שימוש בראוטר החדש
 
 app.get('/', (req, res) => {
     res.send('ברוכים הבאים לבק-אנד של "תדר"!');
 });
 
 // Middleware לטיפול בנתיבים לא קיימים (404 Not Found)
-// התיקון המדויק שהצעת עבור Express 5
 app.use((req, res, next) => {
     next(new ApiError(404, 'הנתיב לא נמצא'));
 });

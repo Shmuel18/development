@@ -28,13 +28,40 @@ const createSubcategory = async (req, res) => {
 
 // קבלת כל תתי-הקטגוריות
 const getAllSubcategories = async (req, res) => {
-    const subcategories = await subcategoryModel.getAll();
-    res.status(200).json(subcategories);
+    // סכימת ולידציה לפרמטרי ה-query
+    const querySchema = Joi.object({
+        limit: Joi.number().integer().min(1).default(10),
+        page: Joi.number().integer().min(1).default(1),
+        search: Joi.string().allow('').default(''),
+        categoryId: Joi.number().integer(),
+    });
+
+    const { error, value } = querySchema.validate(req.query);
+
+    if (error) {
+        throw new ApiError(400, error.details[0].message);
+    }
+
+    const { limit, page, search, categoryId } = value;
+    const offset = (page - 1) * limit;
+
+    const result = await subcategoryModel.getAll(limit, offset, search, categoryId);
+
+    res.status(200).json({
+        total: result.total,
+        page,
+        limit,
+        subcategories: result.subcategories
+    });
 };
 
 // קבלת תת-קטגוריה ספציפית
 const getSubcategoryById = async (req, res) => {
     const subcategoryId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(subcategoryId)) {
+        throw new ApiError(400, 'מזהה תת-קטגוריה לא תקין');
+    }
     const subcategory = await subcategoryModel.getById(subcategoryId);
 
     if (!subcategory) {
@@ -47,6 +74,10 @@ const getSubcategoryById = async (req, res) => {
 // עדכון תת-קטגוריה קיימת
 const updateSubcategory = async (req, res) => {
     const subcategoryId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(subcategoryId)) {
+        throw new ApiError(400, 'מזהה תת-קטגוריה לא תקין');
+    }
     const { error, value } = subcategorySchema.validate(req.body);
     if (error) {
         throw new ApiError(400, error.details[0].message);
@@ -67,6 +98,10 @@ const updateSubcategory = async (req, res) => {
 // מחיקת תת-קטגוריה
 const deleteSubcategory = async (req, res) => {
     const subcategoryId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(subcategoryId)) {
+        throw new ApiError(400, 'מזהה תת-קטגוריה לא תקין');
+    }
     const deletedSubcategory = await subcategoryModel.remove(subcategoryId);
     
     if (!deletedSubcategory) {

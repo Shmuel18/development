@@ -27,13 +27,39 @@ const createCategory = async (req, res) => {
 
 // קבלת כל הקטגוריות
 const getAllCategories = async (req, res) => {
-    const categories = await categoryModel.getAll();
-    res.status(200).json(categories);
+    // סכימת ולידציה לפרמטרי ה-query
+    const querySchema = Joi.object({
+        limit: Joi.number().integer().min(1).default(10),
+        page: Joi.number().integer().min(1).default(1),
+        search: Joi.string().allow('').default(''),
+    });
+
+    const { error, value } = querySchema.validate(req.query);
+
+    if (error) {
+        throw new ApiError(400, error.details[0].message);
+    }
+
+    const { limit, page, search } = value;
+    const offset = (page - 1) * limit;
+
+    const result = await categoryModel.getAll(limit, offset, search);
+
+    res.status(200).json({
+        total: result.total,
+        page,
+        limit,
+        categories: result.categories
+    });
 };
 
 // קבלת קטגוריה ספציפית
 const getCategoryById = async (req, res) => {
     const categoryId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(categoryId)) {
+        throw new ApiError(400, 'מזהה קטגוריה לא תקין');
+    }
     const category = await categoryModel.getById(categoryId);
 
     if (!category) {
@@ -46,6 +72,10 @@ const getCategoryById = async (req, res) => {
 // עדכון קטגוריה קיימת
 const updateCategory = async (req, res) => {
     const categoryId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(categoryId)) {
+        throw new ApiError(400, 'מזהה קטגוריה לא תקין');
+    }
     const { error } = categorySchema.validate(req.body);
     if (error) {
         throw new ApiError(400, error.details[0].message);
@@ -66,6 +96,10 @@ const updateCategory = async (req, res) => {
 // מחיקת קטגוריה
 const deleteCategory = async (req, res) => {
     const categoryId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(categoryId)) {
+        throw new ApiError(400, 'מזהה קטגוריה לא תקין');
+    }
     const deletedCategory = await categoryModel.remove(categoryId);
 
     if (!deletedCategory.category) {

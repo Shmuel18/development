@@ -68,6 +68,10 @@ const getAllDevices = async (req, res) => {
 // קבלת מכשיר ספציפי
 const getDeviceById = async (req, res) => {
     const deviceId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(deviceId)) {
+        throw new ApiError(400, 'מזהה מכשיר לא תקין');
+    }
     const device = await deviceModel.getById(deviceId);
     
     if (!device) {
@@ -80,6 +84,10 @@ const getDeviceById = async (req, res) => {
 // עדכון מכשיר קיים (PATCH)
 const updateDevice = async (req, res) => {
     const deviceId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(deviceId)) {
+        throw new ApiError(400, 'מזהה מכשיר לא תקין');
+    }
     
     // סכימת ולידציה עבור עדכון - כל השדות אופציונליים
     const updateSchema = Joi.object({
@@ -122,6 +130,10 @@ const updateDevice = async (req, res) => {
 // מחיקת מכשיר
 const deleteDevice = async (req, res) => {
     const deviceId = req.params.id;
+    // ולידציה: ודא שה-ID הוא מספר תקין
+    if (isNaN(deviceId)) {
+        throw new ApiError(400, 'מזהה מכשיר לא תקין');
+    }
     const deletedDevice = await deviceModel.remove(deviceId);
     
     if (!deletedDevice) {
