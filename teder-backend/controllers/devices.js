@@ -114,7 +114,7 @@ const updateDevice = async (req, res) => {
     
     const values = Object.values(value);
 
-    // התיקון: מעביר את ה-deviceId כארגומנט ראשון, כפי שהמודל מצפה.
+    // תיקון הבאג: מעביר את ה-deviceId כארגומנט נפרד כפי שהמודל מצפה.
     const updatedDevice = await deviceModel.update(deviceId, updates, values);
 
     if (!updatedDevice) {
