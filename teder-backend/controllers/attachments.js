@@ -44,28 +44,25 @@ const createAttachment = async (req, res) => {
         throw new ApiError(400, 'לא נשלחו קבצים להעלאה.');
     }
 
-    const attachments = req.files.map(file => [
-        id,
-        file.filename,
-        file.mimetype,
-        file.path
-    ]);
+    // יצירת מערך של Promises עבור כל קובץ שהועלה
+    const attachmentPromises = req.files.map(file => {
+        const query = `
+            INSERT INTO attachments (device_id, file_name, mime_type, file_path)
+            VALUES ($1, $2, $3, $4) RETURNING *
+        `;
+        const values = [id, file.filename, file.mimetype, file.path];
+        return db.query(query, values);
+    });
 
-    // שמירת הנתונים במסד הנתונים
-    const query = `
-        INSERT INTO attachments (device_id, file_name, mime_type, file_path)
-        VALUES ($1, $2, $3, $4) RETURNING *
-    `;
+    // ביצוע כל ה-Promises במקביל
+    const results = await Promise.all(attachmentPromises);
 
-    const results = [];
-    for (const att of attachments) {
-        const result = await db.query(query, att);
-        results.push(result.rows[0]);
-    }
+    // חילוץ הנתונים מהתוצאות
+    const attachments = results.map(result => result.rows[0]);
 
     res.status(201).json({
         message: 'הקבצים הועלו בהצלחה',
-        attachments: results
+        attachments: attachments
     });
 };
 

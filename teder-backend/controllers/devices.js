@@ -115,7 +115,7 @@ const updateDevice = async (req, res) => {
     const values = Object.values(value);
     values.push(deviceId);
 
-    const updatedDevice = await deviceModel.update(deviceId, updates, values);
+    const updatedDevice = await deviceModel.update(updates, values);
 
     if (!updatedDevice) {
         throw new ApiError(404, 'המכשיר לא נמצא');

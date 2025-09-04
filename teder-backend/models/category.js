@@ -27,20 +27,28 @@ const update = async (id, name) => {
 
 // מחיקת קטגוריה
 const remove = async (id) => {
-    // בצע מחיקה של המכשירים המשויכים לקטגוריה
-    const devicesResult = await db.query('DELETE FROM devices WHERE category_id = $1 RETURNING *', [id]);
+    // התחלת טרנזקציה
+    await db.query('BEGIN');
+    try {
+        // מחיקה של מכשירים, תתי-קטגוריות והקטגוריה
+        const devicesResult = await db.query('DELETE FROM devices WHERE category_id = $1 RETURNING *', [id]);
+        const subcategoriesResult = await db.query('DELETE FROM subcategories WHERE category_id = $1 RETURNING *', [id]);
+        const categoryResult = await db.query('DELETE FROM categories WHERE id = $1 RETURNING *', [id]);
 
-    // בצע מחיקה גם של תתי-הקטגוריות המשויכות אליה
-    const subcategoriesResult = await db.query('DELETE FROM subcategories WHERE category_id = $1 RETURNING *', [id]);
-    
-    // לבסוף, מחק את הקטגוריה עצמה
-    const categoryResult = await db.query('DELETE FROM categories WHERE id = $1 RETURNING *', [id]);
-    
-    return {
-        category: categoryResult.rows[0],
-        subcategories: subcategoriesResult.rows,
-        devices: devicesResult.rows
-    };
+        // אישור הטרנזקציה
+        await db.query('COMMIT');
+
+        // החזרת התוצאות
+        return {
+            category: categoryResult.rows[0],
+            subcategories: subcategoriesResult.rows,
+            devices: devicesResult.rows
+        };
+    } catch (e) {
+        // ביטול הטרנזקציה במקרה של שגיאה
+        await db.query('ROLLBACK');
+        throw e;
+    }
 };
 
 module.exports = {

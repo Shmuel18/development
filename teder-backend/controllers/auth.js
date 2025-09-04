@@ -4,8 +4,9 @@ const Joi = require('joi'); // הוספת ייבוא של Joi
 const userModel = require('../models/user');
 const ApiError = require('../utils/ApiError');
 
-// הגדר את מפתח ה-JWT הסודי שלך
-const JWT_SECRET = 'your-super-secret-jwt-key';
+// טעינת משתני סביבה
+require('dotenv').config();
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // פונקציית עזר לטיפול בשגיאות א-סינכרוניות
 const asyncHandler = (fn) => (req, res, next) => {

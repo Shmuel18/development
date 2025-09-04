@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
 const ApiError = require('../utils/ApiError');
 
-// הגדר את מפתח ה-JWT הסודי שלך
-const JWT_SECRET = 'your-super-secret-jwt-key'; // ודא שזה אותו מפתח כמו ב-controllers/auth.js
+// טעינת משתני סביבה
+require('dotenv').config();
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Middleware לאימות טוקן
 const protect = (req, res, next) => {

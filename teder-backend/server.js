@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
+const path = require('path'); // ייבוא ספריית path
 const port = process.env.PORT || 3000;
 const devicesRouter = require('./routes/devices');
 const categoriesRouter = require('./routes/categories');
@@ -25,6 +26,9 @@ app.use(helmet());
 app.use(cors());
 app.use(limiter);
 app.use(morgan('dev'));
+
+// הגדרת נתיב סטטי לקבצים המצורפים
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/devices', devicesRouter);
 app.use('/api/categories', categoriesRouter);

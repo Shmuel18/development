@@ -1,4 +1,6 @@
 const db = require('../config/db');
+const fs = require('fs');
+const path = require('path');
 
 // קבלת כל המכשירים עם פאגינציה וסינון
 const getAll = async (limit, offset, sort, dir, searchTerm, categoryId, subcategoryId) => {
@@ -76,17 +78,50 @@ const create = async (deviceData) => {
 
 // עדכון מכשיר קיים
 const update = async (id, updates, values) => {
+    // הוספת ה-id למערך הערכים
+    const finalValues = [...values, id];
     const result = await db.query(
-        `UPDATE devices SET ${updates} WHERE id = $${values.length} RETURNING *`,
-        values
+        `UPDATE devices SET ${updates} WHERE id = $${finalValues.length} RETURNING *`,
+        finalValues
     );
     return result.rows[0];
 };
 
 // מחיקת מכשיר
 const remove = async (id) => {
-    const result = await db.query('DELETE FROM devices WHERE id = $1 RETURNING *', [id]);
-    return result.rows[0];
+    await db.query('BEGIN'); // התחלת טרנזקציה
+    try {
+        // 1. מציאת כל הקבצים המצורפים המשויכים למכשיר
+        const attachmentsResult = await db.query('SELECT * FROM attachments WHERE device_id = $1', [id]);
+        const attachments = attachmentsResult.rows;
+
+        // 2. מחיקת הקבצים הפיזיים מהשרת
+        const deletionPromises = attachments.map(attachment => {
+            return new Promise((resolve, reject) => {
+                const filePath = path.join(__dirname, '../', 'uploads', attachment.file_name);
+                fs.unlink(filePath, (err) => {
+                    if (err && err.code !== 'ENOENT') { // אם השגיאה היא לא "הקובץ לא קיים", זרוק אותה
+                        reject(err);
+                    }
+                    resolve();
+                });
+            });
+        });
+        await Promise.all(deletionPromises);
+
+        // 3. מחיקת רשומות הקבצים המצורפים ממסד הנתונים
+        await db.query('DELETE FROM attachments WHERE device_id = $1', [id]);
+        
+        // 4. מחיקת רשומת המכשיר
+        const deviceResult = await db.query('DELETE FROM devices WHERE id = $1 RETURNING *', [id]);
+        
+        await db.query('COMMIT'); // אישור הטרנזקציה
+        
+        return deviceResult.rows[0];
+    } catch (error) {
+        await db.query('ROLLBACK'); // ביטול הטרנזקציה במקרה של שגיאה
+        throw error;
+    }
 };
 
 module.exports = {
