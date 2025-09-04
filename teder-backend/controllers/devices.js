@@ -113,9 +113,9 @@ const updateDevice = async (req, res) => {
         .join(', ');
     
     const values = Object.values(value);
-    values.push(deviceId);
 
-    const updatedDevice = await deviceModel.update(updates, values);
+    // התיקון: מעביר את ה-deviceId כארגומנט ראשון, כפי שהמודל מצפה.
+    const updatedDevice = await deviceModel.update(deviceId, updates, values);
 
     if (!updatedDevice) {
         throw new ApiError(404, 'המכשיר לא נמצא');
