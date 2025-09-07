@@ -1,11 +1,7 @@
 const Joi = require('joi');
 const deviceModel = require('../models/device');
 const ApiError = require('../utils/ApiError');
-
-// פונקציית עזר לטיפול בשגיאות א-סינכרוניות
-const asyncHandler = (fn) => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-};
+const asyncHandler = require('../utils/asyncHandler'); // ייבוא הפונקציה
 
 // סכימת ולידציה ליצירה ועדכון
 const deviceSchema = Joi.object({
@@ -108,14 +104,18 @@ const updateDevice = async (req, res) => {
         throw new ApiError(400, error.details[0].message);
     }
     
-    const updates = Object.keys(value)
-        .map((key, index) => `${key} = $${index + 1}`)
-        .join(', ');
-    
-    const values = Object.values(value);
+    const updates = [];
+    const values = [];
 
-    // תיקון הבאג: מעביר את ה-deviceId כארגומנט נפרד כפי שהמודל מצפה.
-    const updatedDevice = await deviceModel.update(deviceId, updates, values);
+    // בנית שאילתה דינמית בצורה קריאה יותר
+    let index = 1;
+    for (const [key, val] of Object.entries(value)) {
+        updates.push(`${key} = $${index}`);
+        values.push(val);
+        index++;
+    }
+
+    const updatedDevice = await deviceModel.update(deviceId, updates.join(', '), values);
 
     if (!updatedDevice) {
         throw new ApiError(404, 'המכשיר לא נמצא');

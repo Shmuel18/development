@@ -2,7 +2,11 @@ const multer = require('multer');
 const path = require('path');
 const db = require('../config/db');
 const ApiError = require('../utils/ApiError');
-const attachmentModel = require('../models/attachment'); // ייבוא המודל החדש
+const attachmentModel = require('../models/attachment');
+const asyncHandler = require('../utils/asyncHandler');
+
+// הגדרת קבוע עבור סוגי הקבצים המותרים
+const ALLOWED_FILE_TYPES = /jpeg|jpg|png|pdf/;
 
 // הגדרת אחסון הקבצים באמצעות Multer
 const storage = multer.diskStorage({
@@ -19,9 +23,8 @@ const upload = multer({
     limits: { fileSize: 10000000 }, // הגבלת גודל קובץ ל-10MB
     fileFilter: (req, file, cb) => {
         // בקרת סוגי קבצים מותרים (תמונות ו-PDF)
-        const filetypes = /jpeg|jpg|png|pdf/;
-        const mimetype = filetypes.test(file.mimetype);
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = ALLOWED_FILE_TYPES.test(file.mimetype);
+        const extname = ALLOWED_FILE_TYPES.test(path.extname(file.originalname).toLowerCase());
 
         if (mimetype && extname) {
             return cb(null, true);
@@ -30,11 +33,6 @@ const upload = multer({
         }
     }
 }).array('attachments'); // ציפייה למערך של קבצים תחת השם 'attachments'
-
-// פונקציית עזר לטיפול בשגיאות א-סינכרוניות
-const asyncHandler = (fn) => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-};
 
 const createAttachment = async (req, res) => {
     // מזהה המכשיר מתוך הפרמטרים של הנתיב
@@ -68,6 +66,8 @@ const createAttachment = async (req, res) => {
 };
 
 const deleteAttachment = async (req, res) => {
+    // יש לוודא שהפונקציה עדיין עובדת עם ה-ID של הקובץ המצורף עצמו
+    // ולא עם ה-deviceId מהנתיב המעודכן, כפי שנדרש
     const { id } = req.params;
     if (isNaN(id)) {
         throw new ApiError(400, 'מזהה קובץ מצורף לא תקין');

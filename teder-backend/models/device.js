@@ -3,15 +3,17 @@ const fs = require('fs');
 const path = require('path');
 const attachmentModel = require('./attachment'); // ייבוא המודל החדש
 
+// הגדרת קבועים עבור שדות המיון המותרים
+const ALLOWED_SORT_COLUMNS = {
+    'id': 'id',
+    'name': 'name',
+    'manufacturer': 'manufacturer',
+    'model': 'model'
+};
+
 // קבלת כל המכשירים עם פאגינציה וסינון
 const getAll = async (limit, offset, sort, dir, searchTerm, categoryId, subcategoryId) => {
-    const allowedSortColumns = {
-        'id': 'id',
-        'name': 'name',
-        'manufacturer': 'manufacturer',
-        'model': 'model'
-    };
-    const sortField = allowedSortColumns[sort] || 'id';
+    const sortField = ALLOWED_SORT_COLUMNS[sort] || 'id';
     const sortDirection = dir === 'DESC' ? 'DESC' : 'ASC';
 
     let baseQuery = `SELECT * FROM devices`;

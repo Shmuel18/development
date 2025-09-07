@@ -1,11 +1,7 @@
 const Joi = require('joi');
 const categoryModel = require('../models/category');
 const ApiError = require('../utils/ApiError');
-
-// פונקציית עזר לטיפול בשגיאות א-סינכרוניות
-const asyncHandler = (fn) => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-};
+const asyncHandler = require('../utils/asyncHandler');
 
 // סכימת ולידציה באמצעות Joi
 const categorySchema = Joi.object({
