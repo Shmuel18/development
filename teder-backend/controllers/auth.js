@@ -21,7 +21,11 @@ const authSchema = Joi.object({
 
 // התחברות משתמש
 const login = async (req, res) => {
-    const { username, password } = req.body;
+    const { error, value } = authSchema.validate(req.body);
+    if (error) {
+        throw new ApiError(400, error.details[0].message);
+    }
+    const { username, password } = value;
 
     // 1. מציאת המשתמש
     const user = await userModel.findByUsername(username);

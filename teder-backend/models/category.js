@@ -2,6 +2,7 @@ const db = require('../config/db');
 const ApiError = require('../utils/ApiError');
 const fs = require('fs');
 const path = require('path');
+const deviceModel = require('./device'); // ייבוא המודל החדש
 
 // קבלת כל הקטגוריות
 const getAll = async (limit, offset, searchTerm) => {
@@ -60,31 +61,11 @@ const remove = async (id) => {
         const devicesResult = await db.query('SELECT id FROM devices WHERE category_id = $1', [id]);
         const deviceIds = devicesResult.rows.map(row => row.id);
 
-        // מחיקת הקבצים המצורפים הפיזיים של המכשירים
-        if (deviceIds.length > 0) {
-            const placeholders = deviceIds.map((_, i) => `$${i + 1}`).join(',');
-            const attachmentsResult = await db.query(`SELECT file_name FROM attachments WHERE device_id IN (${placeholders})`, deviceIds);
-            
-            for (const attachment of attachmentsResult.rows) {
-                const filePath = path.join(__dirname, '..', 'uploads', attachment.file_name);
-                try {
-                    if (fs.existsSync(filePath)) {
-                        fs.unlinkSync(filePath);
-                    }
-                } catch (e) {
-                    console.error(`Failed to delete file: ${filePath}`, e);
-                }
-            }
-        }
+        // מחיקת כל המכשירים הקשורים באמצעות המודל שלהם
+        const deletionPromises = deviceIds.map(deviceId => deviceModel.remove(deviceId));
+        await Promise.all(deletionPromises);
         
-        // מחיקת רשומות הקבצים המצורפים ממסד הנתונים
-        if (deviceIds.length > 0) {
-            const placeholders = deviceIds.map((_, i) => `$${i + 1}`).join(',');
-            await db.query(`DELETE FROM attachments WHERE device_id IN (${placeholders})`, deviceIds);
-        }
-
-        // מחיקת המכשירים והתתי-קטגוריות
-        const deletedDevices = await db.query('DELETE FROM devices WHERE category_id = $1 RETURNING *', [id]);
+        // מחיקת התתי-קטגוריות
         const subcategoriesResult = await db.query('DELETE FROM subcategories WHERE category_id = $1 RETURNING *', [id]);
         
         // מחיקת הקטגוריה עצמה
@@ -97,7 +78,7 @@ const remove = async (id) => {
         return {
             category: categoryResult.rows[0],
             subcategories: subcategoriesResult.rows,
-            deletedDevices: deletedDevices.rows
+            deletedDevices: deviceIds.length
         };
     } catch (e) {
         await db.query('ROLLBACK'); // ביטול הטרנזקציה במקרה של שגיאה

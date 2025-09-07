@@ -8,32 +8,47 @@ const getById = async (id) => {
     return result.rows[0];
 };
 
-const remove = async (id) => {
-    // 1. קבלת פרטי הקובץ מה-DB
-    const attachment = await getById(id);
-    if (!attachment) {
-        return null;
-    }
+// פונקציה חדשה ליצירת קובץ מצורף
+const create = async (deviceId, fileName, mimeType, filePath) => {
+    const query = `
+        INSERT INTO attachments (device_id, file_name, mime_type, file_path)
+        VALUES ($1, $2, $3, $4) RETURNING *
+    `;
+    const values = [deviceId, fileName, mimeType, filePath];
+    const result = await db.query(query, values);
+    return result.rows[0];
+};
 
-    // 2. מחיקת הקובץ הפיזי מהשרת
-    const filePath = path.join(__dirname, '..', 'uploads', attachment.file_name);
+const remove = async (id) => {
+    await db.query('BEGIN'); // התחלת טרנזקציה
     try {
+        // 1. קבלת פרטי הקובץ מה-DB
+        const attachment = await getById(id);
+        if (!attachment) {
+            await db.query('ROLLBACK');
+            return null;
+        }
+
+        // 2. מחיקת רשומת הקובץ המצורף ממסד הנתונים
+        const result = await db.query('DELETE FROM attachments WHERE id = $1 RETURNING *', [id]);
+        
+        // 3. מחיקת הקובץ הפיזי מהשרת
+        const filePath = path.join(__dirname, '..', 'uploads', attachment.file_name);
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
-    } catch (e) {
-        console.error(`Failed to delete file: ${filePath}`, e);
-        // נמשיך למחיקת הרשומה ב-DB גם אם מחיקת הקובץ הפיזי נכשלה.
-        // אנו נשאיר הודעת שגיאה ב-log כדי שנדע על הבעיה.
-    }
 
-    // 3. מחיקת רשומת הקובץ המצורף ממסד הנתונים
-    const result = await db.query('DELETE FROM attachments WHERE id = $1 RETURNING *', [id]);
-    
-    return result.rows[0];
+        await db.query('COMMIT'); // אישור הטרנזקציה
+        return result.rows[0];
+    } catch (e) {
+        console.error(`Failed to delete attachment: ${id}`, e);
+        await db.query('ROLLBACK'); // ביטול הטרנזקציה במקרה של שגיאה
+        throw e; // זריקת השגיאה הלאה לטיפול הבקר
+    }
 };
 
 module.exports = {
     getById,
+    create,
     remove,
 };

@@ -1,9 +1,11 @@
 const multer = require('multer');
 const path = require('path');
-const db = require('../config/db');
 const ApiError = require('../utils/ApiError');
 const attachmentModel = require('../models/attachment');
 const asyncHandler = require('../utils/asyncHandler');
+
+// הגדרת קבוע עבור שם השדה של הקובץ המצורף
+const ATTACHMENT_FIELD_NAME = 'attachments';
 
 // הגדרת קבוע עבור סוגי הקבצים המותרים
 const ALLOWED_FILE_TYPES = /jpeg|jpg|png|pdf/;
@@ -32,7 +34,7 @@ const upload = multer({
             cb(new ApiError(400, 'העלאת קובץ נכשלה. סוגי קבצים מותרים הם תמונות ו-PDF בלבד.'));
         }
     }
-}).array('attachments'); // ציפייה למערך של קבצים תחת השם 'attachments'
+}).array(ATTACHMENT_FIELD_NAME); // שימוש בקבוע שהוגדר
 
 const createAttachment = async (req, res) => {
     // מזהה המכשיר מתוך הפרמטרים של הנתיב
@@ -45,19 +47,11 @@ const createAttachment = async (req, res) => {
 
     // יצירת מערך של Promises עבור כל קובץ שהועלה
     const attachmentPromises = req.files.map(file => {
-        const query = `
-            INSERT INTO attachments (device_id, file_name, mime_type, file_path)
-            VALUES ($1, $2, $3, $4) RETURNING *
-        `;
-        const values = [id, file.filename, file.mimetype, file.path];
-        return db.query(query, values);
+        return attachmentModel.create(id, file.filename, file.mimetype, file.path);
     });
 
     // ביצוע כל ה-Promises במקביל
-    const results = await Promise.all(attachmentPromises);
-
-    // חילוץ הנתונים מהתוצאות
-    const attachments = results.map(result => result.rows[0]);
+    const attachments = await Promise.all(attachmentPromises);
 
     res.status(201).json({
         message: 'הקבצים הועלו בהצלחה',
@@ -66,8 +60,6 @@ const createAttachment = async (req, res) => {
 };
 
 const deleteAttachment = async (req, res) => {
-    // יש לוודא שהפונקציה עדיין עובדת עם ה-ID של הקובץ המצורף עצמו
-    // ולא עם ה-deviceId מהנתיב המעודכן, כפי שנדרש
     const { id } = req.params;
     if (isNaN(id)) {
         throw new ApiError(400, 'מזהה קובץ מצורף לא תקין');
