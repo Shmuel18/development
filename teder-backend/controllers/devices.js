@@ -1,7 +1,7 @@
 const Joi = require('joi');
 const deviceModel = require('../models/device');
 const ApiError = require('../utils/ApiError');
-const asyncHandler = require('../utils/asyncHandler'); // ייבוא הפונקציה
+const asyncHandler = require('../utils/asyncHandler');
 
 // סכימת ולידציה ליצירה ועדכון
 const deviceSchema = Joi.object({

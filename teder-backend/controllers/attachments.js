@@ -34,25 +34,17 @@ const upload = multer({
             cb(new ApiError(400, 'העלאת קובץ נכשלה. סוגי קבצים מותרים הם תמונות ו-PDF בלבד.'));
         }
     }
-}).array(ATTACHMENT_FIELD_NAME); // שימוש בקבוע שהוגדר
+}).array(ATTACHMENT_FIELD_NAME);
 
 const createAttachment = async (req, res) => {
-    // מזהה המכשיר מתוך הפרמטרים של הנתיב
     const { id } = req.params;
-
-    // ודא שהקובץ הועלה
     if (!req.files || req.files.length === 0) {
         throw new ApiError(400, 'לא נשלחו קבצים להעלאה.');
     }
 
-    // יצירת מערך של Promises עבור כל קובץ שהועלה
-    const attachmentPromises = req.files.map(file => {
-        return attachmentModel.create(id, file.filename, file.mimetype, file.path);
-    });
-
-    // ביצוע כל ה-Promises במקביל
-    const attachments = await Promise.all(attachmentPromises);
-
+    // קריאה לפונקציה החדשה במודל שתטפל בטרנזקציה ובשמירה של כל הקבצים
+    const attachments = await attachmentModel.createMany(id, req.files);
+    
     res.status(201).json({
         message: 'הקבצים הועלו בהצלחה',
         attachments: attachments

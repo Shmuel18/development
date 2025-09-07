@@ -1,8 +1,8 @@
 const db = require('../config/db');
 const ApiError = require('../utils/ApiError');
-const fs = require('fs');
+const fs = require('fs').promises; // שינוי: ייבוא אסינכרוני של fs
 const path = require('path');
-const deviceModel = require('./device'); // ייבוא המודל החדש
+const deviceModel = require('./device');
 
 // קבלת כל הקטגוריות
 const getAll = async (limit, offset, searchTerm) => {
