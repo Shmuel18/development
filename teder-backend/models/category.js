@@ -1,5 +1,7 @@
 const db = require('../config/db');
 const ApiError = require('../utils/ApiError');
+const fs = require('fs');
+const path = require('path');
 
 // קבלת כל הקטגוריות
 const getAll = async (limit, offset, searchTerm) => {
@@ -54,17 +56,17 @@ const update = async (id, name) => {
 const remove = async (id) => {
     await db.query('BEGIN'); // התחלת טרנזקציה
     try {
-        // מציאת המכשירים שקשורים לקטגוריה
+        // מציאת כל המכשירים שקשורים לקטגוריה
         const devicesResult = await db.query('SELECT id FROM devices WHERE category_id = $1', [id]);
         const deviceIds = devicesResult.rows.map(row => row.id);
 
-        // מחיקת הקבצים המצורפים של המכשירים
+        // מחיקת הקבצים המצורפים הפיזיים של המכשירים
         if (deviceIds.length > 0) {
             const placeholders = deviceIds.map((_, i) => `$${i + 1}`).join(',');
-            const attachmentsResult = await db.query(`SELECT file_path FROM attachments WHERE device_id IN (${placeholders})`, deviceIds);
-            const filePaths = attachmentsResult.rows.map(row => path.join(__dirname, '..', 'uploads', path.basename(row.file_path)));
+            const attachmentsResult = await db.query(`SELECT file_name FROM attachments WHERE device_id IN (${placeholders})`, deviceIds);
             
-            for (const filePath of filePaths) {
+            for (const attachment of attachmentsResult.rows) {
+                const filePath = path.join(__dirname, '..', 'uploads', attachment.file_name);
                 try {
                     if (fs.existsSync(filePath)) {
                         fs.unlinkSync(filePath);
@@ -74,10 +76,18 @@ const remove = async (id) => {
                 }
             }
         }
+        
+        // מחיקת רשומות הקבצים המצורפים ממסד הנתונים
+        if (deviceIds.length > 0) {
+            const placeholders = deviceIds.map((_, i) => `$${i + 1}`).join(',');
+            await db.query(`DELETE FROM attachments WHERE device_id IN (${placeholders})`, deviceIds);
+        }
 
-        // מחיקה של מכשירים, תתי-קטגוריות והקטגוריה
+        // מחיקת המכשירים והתתי-קטגוריות
         const deletedDevices = await db.query('DELETE FROM devices WHERE category_id = $1 RETURNING *', [id]);
         const subcategoriesResult = await db.query('DELETE FROM subcategories WHERE category_id = $1 RETURNING *', [id]);
+        
+        // מחיקת הקטגוריה עצמה
         const categoryResult = await db.query('DELETE FROM categories WHERE id = $1 RETURNING *', [id]);
 
         // אישור הטרנזקציה
@@ -87,7 +97,7 @@ const remove = async (id) => {
         return {
             category: categoryResult.rows[0],
             subcategories: subcategoriesResult.rows,
-            devices: deletedDevices.rows
+            deletedDevices: deletedDevices.rows
         };
     } catch (e) {
         await db.query('ROLLBACK'); // ביטול הטרנזקציה במקרה של שגיאה

@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const fs = require('fs');
 const path = require('path');
+const attachmentModel = require('./attachment'); // ייבוא המודל החדש
 
 // קבלת כל המכשירים עם פאגינציה וסינון
 const getAll = async (limit, offset, sort, dir, searchTerm, categoryId, subcategoryId) => {
@@ -95,24 +96,11 @@ const remove = async (id) => {
         const attachmentsResult = await db.query('SELECT * FROM attachments WHERE device_id = $1', [id]);
         const attachments = attachmentsResult.rows;
 
-        // 2. מחיקת הקבצים הפיזיים מהשרת
-        const deletionPromises = attachments.map(attachment => {
-            return new Promise((resolve, reject) => {
-                const filePath = path.join(__dirname, '../', 'uploads', attachment.file_name);
-                fs.unlink(filePath, (err) => {
-                    if (err && err.code !== 'ENOENT') { // אם השגיאה היא לא "הקובץ לא קיים", זרוק אותה
-                        reject(err);
-                    }
-                    resolve();
-                });
-            });
-        });
+        // 2. מחיקת הקבצים הפיזיים ורשומות ה-DB באמצעות מודל attachments
+        const deletionPromises = attachments.map(attachment => attachmentModel.remove(attachment.id));
         await Promise.all(deletionPromises);
 
-        // 3. מחיקת רשומות הקבצים המצורפים ממסד הנתונים
-        await db.query('DELETE FROM attachments WHERE device_id = $1', [id]);
-        
-        // 4. מחיקת רשומת המכשיר
+        // 3. מחיקת רשומת המכשיר
         const deviceResult = await db.query('DELETE FROM devices WHERE id = $1 RETURNING *', [id]);
         
         await db.query('COMMIT'); // אישור הטרנזקציה

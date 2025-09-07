@@ -2,6 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const db = require('../config/db');
 const ApiError = require('../utils/ApiError');
+const attachmentModel = require('../models/attachment'); // ייבוא המודל החדש
 
 // הגדרת אחסון הקבצים באמצעות Multer
 const storage = multer.diskStorage({
@@ -66,7 +67,20 @@ const createAttachment = async (req, res) => {
     });
 };
 
+const deleteAttachment = async (req, res) => {
+    const { id } = req.params;
+    if (isNaN(id)) {
+        throw new ApiError(400, 'מזהה קובץ מצורף לא תקין');
+    }
+    const deletedAttachment = await attachmentModel.remove(id);
+    if (!deletedAttachment) {
+        throw new ApiError(404, 'הקובץ המצורף לא נמצא');
+    }
+    res.status(200).json({ message: 'הקובץ המצורף נמחק בהצלחה', attachment: deletedAttachment });
+};
+
 module.exports = {
     upload,
-    createAttachment: asyncHandler(createAttachment)
+    createAttachment: asyncHandler(createAttachment),
+    deleteAttachment: asyncHandler(deleteAttachment)
 };
