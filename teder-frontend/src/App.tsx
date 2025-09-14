@@ -21,7 +21,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/category/:name" element={<CategoryPage />} />
+        <Route path="/category/:id" element={<CategoryPage />} /> {/* שורה זו תוקנה */}
         <Route path="/device/:id" element={<DevicePage />} />
         <Route path="/about" element={<About />} />
         <Route path="*" element={<NotFoundPage />} />
