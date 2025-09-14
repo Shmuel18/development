@@ -1,0 +1,23 @@
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- מגן -->
+  <path d="M64 4 L120 28 L108 100 L64 124 L20 100 L8 28 Z" fill="#1e3a8a" stroke="#0f172a" stroke-width="4" />
+  <path d="M64 4 L120 28 L64 64 L8 28 Z" fill="#b91c1c" stroke="#0f172a" stroke-width="4" />
+
+  <!-- זכוכית מגדלת -->
+  <g transform="translate(32, 32)">
+    <circle cx="32" cy="32" r="20" fill="white" stroke="#0f172a" stroke-width="3" />
+    <!-- ידית עם התחלה מחוץ למרכז, קצרה יותר, עם עיצוב -->
+    <line x1="50" y1="50" x2="75" y2="75" stroke="#1e293b" stroke-width="6" stroke-linecap="round" />
+    <line x1="50" y1="50" x2="65" y2="65" stroke="white" stroke-width="2" stroke-linecap="round" stroke-opacity="0.2" />
+  </g>
+
+  <!-- גלי תדר -->
+  <polyline 
+    points="48,64 54,58 58,70 62,56 66,72 70,60 76,64"
+    fill="none"
+    stroke="#0f172a"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
