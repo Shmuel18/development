@@ -7,8 +7,14 @@ const asyncHandler = require('../utils/asyncHandler');
 // הגדרת קבוע עבור שם השדה של הקובץ המצורף
 const ATTACHMENT_FIELD_NAME = 'attachments';
 
-// הגדרת קבוע עבור סוגי הקבצים המותרים
-const ALLOWED_FILE_TYPES = /jpeg|jpg|png|pdf/;
+// הגדרת סוגי הקבצים המותרים
+const ALLOWED_FILE_TYPES = {
+    'image/jpeg': ['.jpeg', '.jpg'],
+    'image/png': ['.png'],
+    'application/pdf': ['.pdf'],
+    'application/msword': ['.doc'],
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+};
 
 // הגדרת אחסון הקבצים באמצעות Multer
 const storage = multer.diskStorage({
@@ -24,14 +30,17 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 10000000 }, // הגבלת גודל קובץ ל-10MB
     fileFilter: (req, file, cb) => {
-        // בקרת סוגי קבצים מותרים (תמונות ו-PDF)
-        const mimetype = ALLOWED_FILE_TYPES.test(file.mimetype);
-        const extname = ALLOWED_FILE_TYPES.test(path.extname(file.originalname).toLowerCase());
+        const fileMimeType = file.mimetype;
+        const fileExtname = path.extname(file.originalname).toLowerCase();
+        
+        // בדיקה מורכבת יותר של סוגי הקבצים
+        const isMimeTypeAllowed = Object.keys(ALLOWED_FILE_TYPES).includes(fileMimeType);
+        const isExtnameAllowed = isMimeTypeAllowed && ALLOWED_FILE_TYPES[fileMimeType].includes(fileExtname);
 
-        if (mimetype && extname) {
+        if (isMimeTypeAllowed && isExtnameAllowed) {
             return cb(null, true);
         } else {
-            cb(new ApiError(400, 'העלאת קובץ נכשלה. סוגי קבצים מותרים הם תמונות ו-PDF בלבד.'));
+            cb(new ApiError(400, 'העלאת קובץ נכשלה. סוגי קבצים מותרים הם תמונות, PDF וקבצי Word בלבד.'));
         }
     }
 }).array(ATTACHMENT_FIELD_NAME);
@@ -42,7 +51,6 @@ const createAttachment = async (req, res) => {
         throw new ApiError(400, 'לא נשלחו קבצים להעלאה.');
     }
 
-    // קריאה לפונקציה החדשה במודל שתטפל בטרנזקציה ובשמירה של כל הקבצים
     const attachments = await attachmentModel.createMany(id, req.files);
     
     res.status(201).json({

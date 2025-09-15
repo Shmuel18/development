@@ -223,4 +223,169 @@ export async function register(credentials: UserCredentials): Promise<{ token: s
     }
 }
 
+// פונקציות חדשות ליצירה, עדכון ומחיקה של קטגוריות ותת-קטגוריות
+export async function createCategory(name: string, token: string): Promise<Category> {
+  try {
+    const response = await fetch(`${API_URL}/categories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'שגיאה ביצירת קטגוריה');
+    }
+    const data = await response.json();
+    return data.category;
+  } catch (error) {
+    console.error("שגיאה ביצירת קטגוריה:", error);
+    throw error;
+  }
+}
+
+export async function createSubcategory(name: string, categoryId: number, token: string): Promise<Subcategory> {
+  try {
+    const response = await fetch(`${API_URL}/subcategories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name, categoryId }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'שגיאה ביצירת תת-קטגוריה');
+    }
+    const data = await response.json();
+    return data.subcategory;
+  } catch (error) {
+    console.error("שגיאה ביצירת תת-קטגוריה:", error);
+    throw error;
+  }
+}
+
+export async function updateCategory(id: number, name: string, token: string): Promise<Category> {
+    try {
+        const response = await fetch(`${API_URL}/categories/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ name }),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'שגיאה בעדכון קטגוריה');
+        }
+        const data = await response.json();
+        return data.category;
+    } catch (error) {
+        console.error("שגיאה בעדכון קטגוריה:", error);
+        throw error;
+    }
+}
+
+export async function deleteCategory(id: number, token: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_URL}/categories/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'שגיאה במחיקת קטגוריה');
+        }
+    } catch (error) {
+        console.error("שגיאה במחיקת קטגוריה:", error);
+        throw error;
+    }
+}
+
+export async function updateSubcategory(id: number, name: string, categoryId: number, token: string): Promise<Subcategory> {
+    try {
+        const response = await fetch(`${API_URL}/subcategories/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ name, categoryId }),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'שגיאה בעדכון תת-קטגוריה');
+        }
+        const data = await response.json();
+        return data.subcategory;
+    } catch (error) {
+        console.error("שגיאה בעדכון תת-קטגוריה:", error);
+        throw error;
+    }
+}
+
+export async function deleteSubcategory(id: number, token: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_URL}/subcategories/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'שגיאה במחיקת תת-קטגוריה');
+        }
+    } catch (error) {
+        console.error("שגיאה במחיקת תת-קטגוריה:", error);
+        throw error;
+    }
+}
+
 export type { Device };
+
+export async function updateDevice(deviceId: number, deviceData: Partial<NewDeviceData>, token: string): Promise<DeviceFromApi> {
+  try {
+    const response = await fetch(`${API_URL}/devices/${deviceId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(deviceData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'שגיאה בעדכון מכשיר.');
+    }
+    const data = await response.json();
+    return data.device;
+  } catch (error) {
+    console.error("שגיאה בעדכון מכשיר:", error);
+    throw error;
+  }
+}
+
+export async function deleteDevice(deviceId: number, token: string): Promise<void> {
+  try {
+    const response = await fetch(`${API_URL}/devices/${deviceId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'שגיאה במחיקת מכשיר.');
+    }
+  } catch (error) {
+    console.error("שגיאה במחיקת מכשיר:", error);
+    throw error;
+  }
+}

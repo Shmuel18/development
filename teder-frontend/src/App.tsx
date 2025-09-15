@@ -5,9 +5,10 @@ import CategoryPage from "./components/CategoryPage";
 import DevicePage from "./components/DevicePage";
 import About from "./components/About";
 import NotFoundPage from "./components/NotFoundPage";
-import AdminDashboard from "./components/AminDashboard";
+import AdminDashboard from "./components/AdminDashboard";
 import Login from "./components/Login";
 import Register from "./components/Register";
+import EditDevicePage from './components/EditDevicePage'; // ייבוא הרכיב החדש
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin-login" element={<Login />} />
         <Route path="/admin-register" element={<Register />} />
+        <Route path="/edit-device/:deviceId" element={<EditDevicePage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>
