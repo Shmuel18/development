@@ -5,6 +5,8 @@ import CategoryPage from "./components/CategoryPage";
 import DevicePage from "./components/DevicePage";
 import About from "./components/About";
 import NotFoundPage from "./components/NotFoundPage";
+import AdminDashboard from "./components/dminDashboard";
+import Login from "./components/Login";
 
 function App() {
   return (
@@ -21,9 +23,11 @@ function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/category/:id" element={<CategoryPage />} /> {/* שורה זו תוקנה */}
+        <Route path="/category/:id" element={<CategoryPage />} />
         <Route path="/device/:id" element={<DevicePage />} />
         <Route path="/about" element={<About />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/login" element={<Login />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>
