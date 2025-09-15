@@ -153,7 +153,7 @@ export async function createDevice(deviceData: NewDeviceData, token: string): Pr
   }
 }
 
-export async function uploadAttachments(deviceId: number, files: FileList, token: string): Promise<unknown[]> {
+export async function uploadAttachments(deviceId: number, files: FileList, token: string): Promise<Attachment[]> {
     const formData = new FormData();
     for (const file of Array.from(files)) {
         formData.append('attachments', file);

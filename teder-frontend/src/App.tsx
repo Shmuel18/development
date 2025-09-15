@@ -5,9 +5,9 @@ import CategoryPage from "./components/CategoryPage";
 import DevicePage from "./components/DevicePage";
 import About from "./components/About";
 import NotFoundPage from "./components/NotFoundPage";
-import AdminDashboard from "./components/dminDashboard";
+import AdminDashboard from "./components/AminDashboard";
 import Login from "./components/Login";
-import Register from "./components/Register"; // ייבוא קומפוננטת ההרשמה
+import Register from "./components/Register";
 
 function App() {
   return (
