@@ -30,7 +30,6 @@ export interface DeviceFromApi {
   attachments?: Attachment[];
 }
 
-// ממשקים חדשים לנתוני המכשיר
 export interface NewDeviceData {
   name: string;
   manufacturer: string;
@@ -150,6 +149,27 @@ export async function login(credentials: UserCredentials): Promise<{ token: stri
     console.error("שגיאת התחברות:", error);
     throw error;
   }
+}
+
+export async function register(credentials: UserCredentials): Promise<{ token: string, user: User }> {
+    try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'שגיאה בהרשמה');
+        }
+
+        const data = await response.json();
+        return { token: data.token, user: data.user };
+    } catch (error) {
+        console.error("שגיאת הרשמה:", error);
+        throw error;
+    }
 }
 
 export type { Device };
