@@ -7,6 +7,12 @@ export interface Category {
   name: string;
 }
 
+export interface Subcategory {
+  id: number;
+  name: string;
+  category_id: number;
+}
+
 export interface Attachment {
   id: number;
   file_name: string;
@@ -65,6 +71,23 @@ export async function fetchCategories(): Promise<Category[]> {
     console.error("שגיאה בטעינת קטגוריות מה-API:", error);
     throw error;
   }
+}
+
+export async function fetchSubcategories(categoryId: number | null): Promise<Subcategory[]> {
+    if (!categoryId) {
+        return [];
+    }
+    try {
+        const response = await fetch(`${API_URL}/subcategories?categoryId=${categoryId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.subcategories || [];
+    } catch (error) {
+        console.error("שגיאה בטעינת תת-קטגוריות מה-API:", error);
+        throw error;
+    }
 }
 
 export async function fetchDevices(
@@ -128,6 +151,34 @@ export async function createDevice(deviceData: NewDeviceData, token: string): Pr
     console.error("שגיאה ביצירת מכשיר:", error);
     throw error;
   }
+}
+
+export async function uploadAttachments(deviceId: number, files: FileList, token: string): Promise<unknown[]> {
+    const formData = new FormData();
+    for (const file of Array.from(files)) {
+        formData.append('attachments', file);
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/devices/${deviceId}/attachments`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        return data.attachments;
+    } catch (error) {
+        console.error("שגיאה בהעלאת קבצים:", error);
+        throw error;
+    }
 }
 
 export async function login(credentials: UserCredentials): Promise<{ token: string, user: User }> {

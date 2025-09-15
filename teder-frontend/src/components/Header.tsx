@@ -1,4 +1,4 @@
-import { FaSun, FaMoon, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { FaSun, FaMoon, FaUser, FaSignOutAlt, FaUserPlus } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useDarkMode } from "../hooks/useDarkMode";
 import { useAuth } from "../context/AuthContext";
@@ -46,13 +46,22 @@ const Header = () => {
             </button>
           </>
         ) : (
-          <Link
-            to="/about"
-            className="text-lg hover:text-blue-400 transition-colors duration-300"
-          >
-            אודות
-          </Link>
+          <>
+            <Link to="/admin-login" className="text-lg hover:text-blue-400 transition-colors duration-300">
+              התחברות
+            </Link>
+            <Link to="/admin-register" className="text-lg px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition-colors duration-300 flex items-center gap-2">
+              <FaUserPlus />
+              <span className="hidden md:inline">הירשם</span>
+            </Link>
+          </>
         )}
+        <Link
+          to="/about"
+          className="text-lg hover:text-blue-400 transition-colors duration-300"
+        >
+          אודות
+        </Link>
       </div>
     </header>
   );

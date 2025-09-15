@@ -7,7 +7,7 @@ import About from "./components/About";
 import NotFoundPage from "./components/NotFoundPage";
 import AdminDashboard from "./components/dminDashboard";
 import Login from "./components/Login";
-import Register from "./components/Register";
+import Register from "./components/Register"; // ייבוא קומפוננטת ההרשמה
 
 function App() {
   return (
@@ -28,8 +28,8 @@ function App() {
         <Route path="/device/:id" element={<DevicePage />} />
         <Route path="/about" element={<About />} />
         <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin-login" element={<Login />} /> {/* נתיב חדש להתחברות מנהלים */}
-        <Route path="/admin-register" element={<Register />} /> {/* נתיב חדש להרשמת מנהלים */}
+        <Route path="/admin-login" element={<Login />} />
+        <Route path="/admin-register" element={<Register />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>

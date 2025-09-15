@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createDevice, fetchCategories, NewDeviceData } from "../api/api";
+import { createDevice, uploadAttachments, fetchCategories, fetchSubcategories, NewDeviceData, Category, Subcategory } from "../api/api";
 import { useAuth } from "../context/AuthContext";
-import { categories as defaultCategories } from "../data/devicesData";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -15,11 +14,13 @@ const AdminDashboard = () => {
     year: undefined,
     security_classification: "",
     description: "",
-    category_id: defaultCategories[0]?.id || 0,
+    category_id: 0,
     subcategory_id: null,
   });
 
-  const [categories, setCategories] = useState(defaultCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -29,10 +30,7 @@ const AdminDashboard = () => {
         const fetchedCategories = await fetchCategories();
         if (fetchedCategories.length > 0) {
           setCategories(fetchedCategories);
-          setFormData((prev) => ({
-            ...prev,
-            category_id: fetchedCategories[0].id,
-          }));
+          setFormData((prev) => ({ ...prev, category_id: fetchedCategories[0].id }));
         }
       } catch (err) {
         console.error("שגיאה בטעינת קטגוריות:", err);
@@ -41,12 +39,31 @@ const AdminDashboard = () => {
     getCategories();
   }, []);
 
+  useEffect(() => {
+    const getSubcategories = async () => {
+      try {
+        const fetchedSubcategories = await fetchSubcategories(formData.category_id);
+        setSubcategories(fetchedSubcategories);
+      } catch (err) {
+        console.error("שגיאה בטעינת תת-קטגוריות:", err);
+      }
+    };
+    if (formData.category_id) {
+        getSubcategories();
+    }
+  }, [formData.category_id]);
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value === "" ? undefined : name === 'category_id' || name === 'subcategory_id' || name === 'year' ? parseInt(value) : value,
     }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedFiles(e.target.files);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,7 +78,11 @@ const AdminDashboard = () => {
 
     try {
       const newDevice = await createDevice(formData, token);
-      console.log("המכשיר נוסף בהצלחה:", newDevice);
+
+      if (selectedFiles && selectedFiles.length > 0) {
+        await uploadAttachments(newDevice.id, selectedFiles, token);
+      }
+      
       setSuccess(true);
       setFormData({
         name: "",
@@ -81,11 +102,11 @@ const AdminDashboard = () => {
     }
   };
 
-  if (!user) {
+  if (!user || (user.role !== 'editor' && user.role !== 'admin')) {
     return (
       <div dir="rtl" className="text-center text-white py-10">
         <p className="text-xl">אין לך הרשאה לגשת לדף זה. אנא התחבר.</p>
-        <button onClick={() => navigate("/login")} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg">
+        <button onClick={() => navigate("/admin-login")} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg">
           עבור לדף התחברות
         </button>
       </div>
@@ -127,11 +148,26 @@ const AdminDashboard = () => {
               className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="mb-4">
+            <label htmlFor="security_classification" className="block text-white text-sm font-bold mb-2">סיווג ביטחוני</label>
+            <input type="text" id="security_classification" name="security_classification" value={formData.security_classification} onChange={handleChange}
+              className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div className="mb-4">
             <label htmlFor="category_id" className="block text-white text-sm font-bold mb-2">קטגוריה</label>
             <select id="category_id" name="category_id" value={formData.category_id} onChange={handleChange} required
               className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="mb-4">
+            <label htmlFor="subcategory_id" className="block text-white text-sm font-bold mb-2">תת-קטגוריה</label>
+            <select id="subcategory_id" name="subcategory_id" value={formData.subcategory_id || ''} onChange={handleChange}
+              className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">אין תת-קטגוריה</option>
+              {subcategories.map(subcat => (
+                <option key={subcat.id} value={subcat.id}>{subcat.name}</option>
               ))}
             </select>
           </div>
@@ -141,6 +177,11 @@ const AdminDashboard = () => {
           <textarea id="description" name="description" value={formData.description} onChange={handleChange}
             className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
         </div>
+        <div className="mb-4">
+            <label htmlFor="attachments" className="block text-white text-sm font-bold mb-2">קבצים מצורפים</label>
+            <input type="file" id="attachments" name="attachments" multiple onChange={handleFileChange}
+              className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
         <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
           הוסף מכשיר
         </button>
