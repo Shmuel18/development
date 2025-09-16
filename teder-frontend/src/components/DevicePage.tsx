@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowRight } from "react-icons/fa";
-import { HiDownload } from "react-icons/hi";
+import { HiDownload } from "react-icons/hi"; // הייבוא המתוקן
 import { fetchDeviceById, fetchCategories, DeviceFromApi, Category } from "../api/api";
 import { motion } from "framer-motion";
 

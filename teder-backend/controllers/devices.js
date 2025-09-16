@@ -14,6 +14,7 @@ const deviceSchema = Joi.object({
     description: Joi.string().allow(null, ''),
     category_id: Joi.number().integer().required(),
     subcategory_id: Joi.number().integer().allow(null).optional(), // שורה זו תוקנה כדי לאפשר ערך null
+    image_url: Joi.string().allow(null, '').optional(), // הוספנו את השדה החדש
 });
 
 // יצירת מכשיר חדש
@@ -96,6 +97,7 @@ const updateDevice = async (req, res) => {
         description: Joi.string().allow(null, ''),
         category_id: Joi.number().integer(),
         subcategory_id: Joi.number().integer().allow(null).optional(), // שורה זו תוקנה גם כאן
+        image_url: Joi.string().allow(null, '').optional(), // הוספנו את השדה החדש
     }).min(1); // לפחות שדה אחד חייב להישלח
 
     const { error, value } = updateSchema.validate(req.body);

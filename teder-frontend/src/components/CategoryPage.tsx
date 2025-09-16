@@ -28,12 +28,15 @@ export default function CategoryPage() {
       }
       
       try {
-        const [fetchedCategories, { devices: fetchedDevices }] = await Promise.all([
-          fetchCategories(),
+        const [{ devices: fetchedDevices }] = await Promise.all([
           fetchDevices(categoryId, search),
         ]);
-        setCategories(fetchedCategories);
         setDevices(fetchedDevices);
+
+        // יש לשקול להעביר את נתוני הקטגוריות מהקומפוננטה ההורה כדי למנוע קריאה מיותרת
+        const fetchedCategories = await fetchCategories();
+        setCategories(fetchedCategories);
+
       } catch (err) {
         console.error("שגיאה בטעינת נתונים מה-API:", err);
         setError("שגיאה בטעינת הנתונים. אנא נסה שנית מאוחר יותר.");

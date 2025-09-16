@@ -1,6 +1,6 @@
 import { Device } from "../data/devicesData";
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'; // תוקן לשימוש במשתנה סביבה
 
 export interface Category {
   id: number;
@@ -34,6 +34,7 @@ export interface DeviceFromApi {
   description?: string;
   category_id: number;
   subcategory_id?: number;
+  image_url?: string; // נוסף שדה חדש לתמונת מכשיר ראשית
   attachments?: Attachment[];
 }
 

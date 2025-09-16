@@ -69,12 +69,12 @@ const getById = async (id) => {
 
 // יצירת מכשיר חדש
 const create = async (deviceData) => {
-    const { name, manufacturer, model, frequency_range, year, security_classification, description, category_id, subcategory_id } = deviceData;
+    const { name, manufacturer, model, frequency_range, year, security_classification, description, category_id, subcategory_id, image_url } = deviceData;
     const result = await db.query(
-        `INSERT INTO devices (name, manufacturer, model, frequency_range, year, security_classification, description, category_id, subcategory_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO devices (name, manufacturer, model, frequency_range, year, security_classification, description, category_id, subcategory_id, image_url)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *`,
-        [name, manufacturer, model, frequency_range, year, security_classification, description, category_id, subcategory_id]
+        [name, manufacturer, model, frequency_range, year, security_classification, description, category_id, subcategory_id, image_url]
     );
     return result.rows[0];
 };
