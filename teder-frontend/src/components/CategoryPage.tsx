@@ -1,49 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowRight } from "react-icons/fa";
-import { HiDownload } from "react-icons/hi";
-import { fetchDeviceById, fetchCategories, DeviceFromApi, Category } from "../api/api";
+import { fetchDevices, DeviceFromApi, fetchCategories, Category } from "../api/api";
 import { motion } from "framer-motion";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export default function DevicePage() {
+export default function CategoryPage() {
   const { id } = useParams<{ id: string }>();
+  const categoryId = id ? parseInt(id) : undefined;
   const navigate = useNavigate();
 
-  const [device, setDevice] = useState<DeviceFromApi | null>(null);
+  const [search, setSearch] = useState("");
+  const [devices, setDevices] = useState<DeviceFromApi[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const getDeviceData = async () => {
+    const getData = async () => {
       setLoading(true);
       setError(null);
-      if (!id) {
-        setError("מזהה מכשיר לא תקין.");
+      if (!categoryId) {
+        setError("מזהה קטגוריה לא תקין.");
         setLoading(false);
         return;
       }
-
+      
       try {
-        const fetchedDevice = await fetchDeviceById(id);
-        const fetchedCategories = await fetchCategories();
-        
-        setDevice(fetchedDevice);
+        const [{ devices: fetchedDevices }, fetchedCategories] = await Promise.all([
+          fetchDevices(categoryId, search),
+          fetchCategories(), // שיפור: קורא רק פעם אחת לקטגוריות
+        ]);
+        setDevices(fetchedDevices);
         setCategories(fetchedCategories);
       } catch (err) {
-        console.error(`שגיאה בטעינת מכשיר עם ID ${id} מה-API:`, err);
-        setError("שגיאה בטעינת פרטי המכשיר. אנא נסה שנית מאוחר יותר.");
+        console.error("שגיאה בטעינת נתונים מה-API:", err);
+        setError("שגיאה בטעינת הנתונים. אנא נסה שנית מאוחר יותר.");
       } finally {
         setLoading(false);
       }
     };
-    getDeviceData();
-  }, [id]);
+    getData();
+  }, [categoryId, search]);
 
-  const currentCategory = categories.find(cat => cat.id === device?.category_id);
-  const deviceImageUrl = device?.image_url;
+  const currentCategory = categories.find((cat) => cat.id === categoryId);
 
   if (loading) {
     return (
@@ -55,50 +56,34 @@ export default function DevicePage() {
         <div className="absolute inset-0 z-0 transition-opacity duration-300">
           <div className="w-full h-full dark:bg-black dark:bg-opacity-60" />
         </div>
-
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-white/80 backdrop-blur-md dark:bg-[#121826]/80 border border-blue-600 rounded-3xl shadow-2xl p-8 animate-pulse"
-          >
-            <div className="flex flex-col md:flex-row gap-8">
-              <div className="w-full md:w-1/3 flex-shrink-0">
-                <div className="w-full h-[256px] bg-gray-700 rounded-2xl"></div>
-              </div>
-
-              <div className="w-full md:w-2/3">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-12 w-12 bg-gray-700 rounded-full"></div>
-                  <div className="h-10 w-3/4 bg-gray-700 rounded-lg"></div>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  <div className="h-6 w-full bg-gray-700 rounded-lg"></div>
-                  <div className="h-6 w-5/6 bg-gray-700 rounded-lg"></div>
-                  <div className="h-6 w-3/4 bg-gray-700 rounded-lg"></div>
-                  <div className="h-6 w-1/2 bg-gray-700 rounded-lg"></div>
-                </div>
-
-                <div className="mb-6">
-                  <div className="h-6 w-40 mb-2 bg-gray-700 rounded-lg"></div>
-                  <div className="h-24 w-full bg-gray-700 rounded-lg"></div>
-                </div>
-
-                <div className="flex flex-wrap gap-4">
-                  <div className="h-10 w-40 bg-blue-600/50 rounded-xl"></div>
-                  <div className="h-10 w-40 bg-red-600/50 rounded-xl"></div>
-                </div>
-              </div>
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <header className="flex flex-col md:flex-row items-center justify-between mb-6 gap-6">
+            <div className="flex items-center gap-3">
+              <span className="h-10 w-10 animate-pulse bg-gray-700 rounded-full"></span>
+              <div className="h-8 w-48 animate-pulse bg-gray-700 rounded-lg"></div>
             </div>
-          </motion.div>
+            <div className="h-10 w-full max-w-sm animate-pulse bg-gray-700 rounded-xl"></div>
+          </header>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="animate-pulse bg-white/70 backdrop-blur-md dark:bg-[#121826] rounded-2xl border border-blue-600 shadow-xl p-4 flex flex-col items-center text-center h-[350px]"
+              >
+                <div className="w-full h-40 sm:h-48 md:h-56 mb-4 bg-gray-700 rounded-lg"></div>
+                <div className="h-6 w-3/4 mb-2 bg-gray-700 rounded-lg"></div>
+                <div className="h-4 w-1/2 mb-2 bg-gray-700 rounded-lg"></div>
+                <div className="h-4 w-1/3 mb-4 bg-gray-700 rounded-lg"></div>
+                <div className="h-10 w-full bg-blue-600/50 rounded-xl"></div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  if (error || !device) {
+  if (error) {
     return (
       <div
         className="relative min-h-screen text-white text-center px-4 bg-cover bg-center"
@@ -107,7 +92,7 @@ export default function DevicePage() {
       >
         <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
         <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
-          <h2 className="text-3xl font-bold mb-4">{error || "המכשיר לא נמצא."}</h2>
+          <h2 className="text-3xl font-bold mb-4">{error}</h2>
           <button
             onClick={() => navigate(-1)}
             className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl text-lg flex items-center gap-2"
@@ -119,8 +104,6 @@ export default function DevicePage() {
     );
   }
 
-  const categoryImageUrl = currentCategory?.image_url;
-
   return (
     <div
       className="relative min-h-screen bg-cover bg-center text-black dark:text-white transition-colors duration-300 px-6 py-12"
@@ -131,93 +114,82 @@ export default function DevicePage() {
         <div className="w-full h-full dark:bg-black dark:bg-opacity-60" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white/80 backdrop-blur-md dark:bg-[#121826]/80 border border-blue-600 rounded-3xl shadow-2xl p-8"
-        >
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="w-full md:w-1/3 flex-shrink-0">
+      <div className="relative z-10">
+        <header className="flex flex-col md:flex-row items-center justify-between mb-6 gap-6">
+          <div className="flex items-center gap-3">
+            {currentCategory?.image_url ? (
               <img
-                src={deviceImageUrl ? `${API_URL}${deviceImageUrl}` : "https://dummyimage.com/400x400/000/fff&text=No+Image"}
-                alt={device.name}
-                className="w-full h-auto rounded-2xl border border-blue-500 shadow-lg object-cover"
+                src={`${API_URL}${currentCategory.image_url}`}
+                alt={currentCategory.name}
+                className="h-10 w-10 object-contain rounded-full"
               />
-            </div>
-
-            <div className="w-full md:w-2/3">
-              <div className="flex items-center gap-4 mb-4">
-                {categoryImageUrl ? (
-                    <img
-                        src={`${API_URL}${categoryImageUrl}`}
-                        alt={currentCategory?.name}
-                        className="h-12 w-12 object-contain"
-                    />
-                ) : (
-                    <div className="h-12 w-12 rounded-full bg-gray-600 flex items-center justify-center text-white">?</div>
-                )}
-                <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-blue-800 dark:text-blue-200 drop-shadow-lg">
-                  {device.name}
-                </h1>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 mb-6 text-lg font-medium text-gray-700 dark:text-gray-300">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-black dark:text-white">יצרן:</span>
-                  <span>{device.manufacturer}</span>
-                </div>
-                {device.model && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-black dark:text-white">דגם:</span>
-                    <span>{device.model}</span>
-                  </div>
-                )}
-                {device.frequency_range && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-black dark:text-white">תדר:</span>
-                    <span>{device.frequency_range}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-black dark:text-white">קטגוריה:</span>
-                  <span>{currentCategory?.name || "לא ידוע"}</span>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold mb-2 text-blue-700 dark:text-blue-300">תיאור</h2>
-                <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-lg">
-                  {device.description}
-                </p>
-              </div>
-
-              {device.attachments && device.attachments.length > 0 && (
-                <div className="mb-6">
-                  <h2 className="text-2xl font-semibold mb-3 text-blue-700 dark:text-blue-300">קבצים מצורפים</h2>
-                  <div className="space-y-3">
-                    {device.attachments.map((attachment) => (
-                      <a
-                        key={attachment.id}
-                        href={`${API_URL}/uploads/${attachment.file_name}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between p-4 bg-gray-100 dark:bg-[#1a1f2e] rounded-xl transition duration-200 hover:bg-blue-100 dark:hover:bg-blue-900 shadow-md"
-                      >
-                        <span className="flex items-center gap-3">
-                          <HiDownload className="text-xl text-blue-600 dark:text-blue-400" />
-                          <span className="font-medium text-gray-900 dark:text-white">{attachment.original_name}</span>
-                        </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">({(attachment.size / 1024 / 1024).toFixed(2)} MB)</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            ) : (
+              <span className="text-4xl text-blue-400">?</span>
+            )}
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-blue-700 dark:text-blue-300 drop-shadow-md">
+              {currentCategory ? currentCategory.name : "קטגוריה"}
+            </h1>
           </div>
-        </motion.div>
+
+          <input
+            type="text"
+            placeholder="🔍 חפש מכשיר לפי שם או תדר"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full max-w-sm bg-white/70 dark:bg-[#1a1f2e] backdrop-blur-md px-4 py-2 rounded-xl border border-blue-600 placeholder-gray-700 dark:placeholder-gray-400 text-black dark:text-white font-semibold"
+          />
+        </header>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {devices.map((device) => (
+            <motion.div
+              key={device.id}
+              whileHover={{ scale: 1.05 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => navigate(`/device/${device.id}`)}
+              className="bg-white/70 backdrop-blur-md dark:bg-[#121826] text-black dark:text-white rounded-2xl border border-blue-600 shadow-xl hover:shadow-2xl p-4 flex flex-col items-center text-center cursor-pointer transition duration-300"
+            >
+              <img
+                src="https://dummyimage.com/150x150/000/fff&text=No+Image"
+                alt={device.name}
+                className="w-full h-40 sm:h-48 md:h-56 mb-4 rounded-lg object-cover border border-blue-500 shadow-md"
+              />
+              <h2 className="text-xl font-semibold mb-1 text-black dark:text-white">
+                {device.name}
+              </h2>
+              {device.frequency_range && (
+                <p className="text-base text-black dark:text-gray-300">
+                  תדר: {device.frequency_range}
+                </p>
+              )}
+              <p className="text-base text-black dark:text-gray-300 mb-2">
+                {device.manufacturer}
+              </p>
+
+              <span className={`text-sm px-3 py-1 rounded-full mb-3 font-bold bg-green-500`}>
+                פעיל
+              </span>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/device/${device.id}`);
+                }}
+                className="mt-auto bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-xl transition duration-200"
+              >
+                פרטים נוספים
+              </button>
+            </motion.div>
+          ))}
+        </div>
+
+        {devices.length === 0 && (
+          <div className="text-center mt-10 text-gray-600 dark:text-gray-400">
+            לא נמצאו מכשירים התואמים את החיפוש.
+          </div>
+        )}
       </div>
     </div>
   );
