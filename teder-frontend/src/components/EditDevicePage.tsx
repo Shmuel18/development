@@ -122,7 +122,7 @@ const EditDevicePage = () => {
       setTimeout(() => navigate(`/device/${deviceId}`), 2000);
     } catch (err) {
       console.error("שגיאה בעדכון מכשיר:", err);
-      setError("שגיאה בעדכון המכשיר. אנא נסה שוב.");
+      setError(err instanceof Error ? err.message : "שגיאה בעדכון המכשיר. אנא נסה שוב.");
     }
   };
 

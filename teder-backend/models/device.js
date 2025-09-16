@@ -1,7 +1,7 @@
 const db = require('../config/db');
 const fs = require('fs');
 const path = require('path');
-const attachmentModel = require('./attachment'); // ייבוא המודל החדש
+const attachmentModel = require('./attachment');
 
 // הגדרת קבועים עבור שדות המיון המותרים
 const ALLOWED_SORT_COLUMNS = {
@@ -63,8 +63,19 @@ const getAll = async (limit, offset, sort, dir, searchTerm, categoryId, subcateg
 
 // קבלת מכשיר ספציפי לפי ID
 const getById = async (id) => {
-    const result = await db.query('SELECT * FROM devices WHERE id = $1', [id]);
-    return result.rows[0];
+    // 1. מציאת פרטי המכשיר
+    const deviceResult = await db.query('SELECT * FROM devices WHERE id = $1', [id]);
+    const device = deviceResult.rows[0];
+
+    if (!device) {
+        return null;
+    }
+
+    // 2. מציאת כל הקבצים המצורפים הקשורים למכשיר
+    const attachmentsResult = await db.query('SELECT id, original_name, file_name, mime_type, size, created_at FROM attachments WHERE device_id = $1', [id]);
+    device.attachments = attachmentsResult.rows;
+
+    return device;
 };
 
 // יצירת מכשיר חדש

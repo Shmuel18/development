@@ -9,12 +9,12 @@ const getById = async (id) => {
 };
 
 // פונקציה ליצירת קובץ מצורף יחיד
-const create = async (deviceId, fileName, mimeType, filePath) => {
+const create = async (deviceId, fileName, originalName, mimeType, size) => {
     const query = `
-        INSERT INTO attachments (device_id, file_name, mime_type, file_path)
-        VALUES ($1, $2, $3, $4) RETURNING *
+        INSERT INTO attachments (device_id, file_name, original_name, mime_type, size)
+        VALUES ($1, $2, $3, $4, $5) RETURNING *
     `;
-    const values = [deviceId, fileName, mimeType, filePath];
+    const values = [deviceId, fileName, originalName, mimeType, size];
     const result = await db.query(query, values);
     return result.rows[0];
 };
@@ -26,10 +26,10 @@ const createMany = async (deviceId, files) => {
     try {
         const attachmentPromises = files.map(file => {
             const query = `
-                INSERT INTO attachments (device_id, file_name, mime_type, file_path)
-                VALUES ($1, $2, $3, $4) RETURNING *
+                INSERT INTO attachments (device_id, file_name, original_name, mime_type, size)
+                VALUES ($1, $2, $3, $4, $5) RETURNING *
             `;
-            const values = [deviceId, file.filename, file.mimetype, file.path];
+            const values = [deviceId, file.filename, file.originalname, file.mimetype, file.size];
             return db.query(query, values);
         });
 

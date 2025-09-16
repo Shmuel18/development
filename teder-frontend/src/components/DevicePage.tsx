@@ -43,6 +43,7 @@ export default function DevicePage() {
   }, [id]);
 
   const currentCategory = categories.find(cat => cat.id === device?.category_id);
+  const deviceImageUrl = device?.image_url;
 
   if (loading) {
     return (
@@ -140,7 +141,7 @@ export default function DevicePage() {
           <div className="flex flex-col md:flex-row gap-8">
             <div className="w-full md:w-1/3 flex-shrink-0">
               <img
-                src="https://dummyimage.com/400x400/000/fff&text=No+Image"
+                src={deviceImageUrl || "https://dummyimage.com/400x400/000/fff&text=No+Image"} // שימוש בנתיב התמונה מה-API
                 alt={device.name}
                 className="w-full h-auto rounded-2xl border border-blue-500 shadow-lg object-cover"
               />
