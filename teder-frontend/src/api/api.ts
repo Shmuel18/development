@@ -5,6 +5,7 @@ const API_URL = 'http://localhost:3000/api';
 export interface Category {
   id: number;
   name: string;
+  image_url?: string; // נוסף שדה חדש
 }
 
 export interface Subcategory {
@@ -223,16 +224,21 @@ export async function register(credentials: UserCredentials): Promise<{ token: s
     }
 }
 
-// פונקציות חדשות ליצירה, עדכון ומחיקה של קטגוריות ותת-קטגוריות
-export async function createCategory(name: string, token: string): Promise<Category> {
+// פונקציות חדשות ליצירה, עדכון ומחיקה של קטגוריות
+export async function createCategory(name: string, imageFile: File | null, token: string): Promise<Category> {
+  const formData = new FormData();
+  formData.append('name', name);
+  if (imageFile) {
+    formData.append('categoryImage', imageFile);
+  }
+
   try {
     const response = await fetch(`${API_URL}/categories`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ name }),
+      body: formData,
     });
     if (!response.ok) {
         const errorData = await response.json();
@@ -246,37 +252,20 @@ export async function createCategory(name: string, token: string): Promise<Categ
   }
 }
 
-export async function createSubcategory(name: string, categoryId: number, token: string): Promise<Subcategory> {
-  try {
-    const response = await fetch(`${API_URL}/subcategories`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name, categoryId }),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'שגיאה ביצירת תת-קטגוריה');
+export async function updateCategory(id: number, name: string, imageFile: File | null, token: string): Promise<Category> {
+    const formData = new FormData();
+    formData.append('name', name);
+    if (imageFile) {
+        formData.append('categoryImage', imageFile);
     }
-    const data = await response.json();
-    return data.subcategory;
-  } catch (error) {
-    console.error("שגיאה ביצירת תת-קטגוריה:", error);
-    throw error;
-  }
-}
-
-export async function updateCategory(id: number, name: string, token: string): Promise<Category> {
+    
     try {
         const response = await fetch(`${API_URL}/categories/${id}`, {
             method: 'PATCH',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({ name }),
+            body: formData,
         });
         if (!response.ok) {
             const errorData = await response.json();
@@ -306,6 +295,28 @@ export async function deleteCategory(id: number, token: string): Promise<void> {
         console.error("שגיאה במחיקת קטגוריה:", error);
         throw error;
     }
+}
+
+export async function createSubcategory(name: string, categoryId: number, token: string): Promise<Subcategory> {
+  try {
+    const response = await fetch(`${API_URL}/subcategories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name, categoryId }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'שגיאה ביצירת תת-קטגוריה');
+    }
+    const data = await response.json();
+    return data.subcategory;
+  } catch (error) {
+    console.error("שגיאה ביצירת תת-קטגוריה:", error);
+    throw error;
+  }
 }
 
 export async function updateSubcategory(id: number, name: string, categoryId: number, token: string): Promise<Subcategory> {
@@ -348,8 +359,6 @@ export async function deleteSubcategory(id: number, token: string): Promise<void
     }
 }
 
-export type { Device };
-
 export async function updateDevice(deviceId: number, deviceData: Partial<NewDeviceData>, token: string): Promise<DeviceFromApi> {
   try {
     const response = await fetch(`${API_URL}/devices/${deviceId}`, {
@@ -389,3 +398,5 @@ export async function deleteDevice(deviceId: number, token: string): Promise<voi
     throw error;
   }
 }
+
+export type { Device };

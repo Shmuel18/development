@@ -16,35 +16,15 @@ const Hero = () => {
           תדר
         </h1>
 
-        <p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 1 }}
+          className="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed"
+        >
           כל התדרים. כל הנתונים. במקום אחד.
-        </p>
-
-        {/* <div className="flex flex-wrap justify-center gap-4">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            className="bg-blue-700 hover:bg-blue-600 text-white px-6 py-3 rounded-md text-lg font-semibold transition"
-          >
-            🔍 חיפוש תדרים
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            className="bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-md text-lg font-semibold transition"
-          >
-            📅 גישה לדו"חות
-          </motion.button>
-        </div> */}
+        </motion.p>
       </motion.div>
-
-      {/* גל SVG המקורי מתוך frequency-wave.svg
-      <div className="mt-8 w-full mb-6">
-        <img
-          src="/src/assets/frequency-wave.svg"
-          alt="Wave Divider"
-          className="w-full h-28 object-cover opacity-80"
-        />
-      </div> */}
     </section>
   );
 };

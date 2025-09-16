@@ -2,6 +2,45 @@ const Joi = require('joi');
 const categoryModel = require('../models/category');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
+
+// הגדרת סוגי הקבצים המותרים
+const ALLOWED_IMAGE_TYPES = {
+    'image/jpeg': ['.jpeg', '.jpg'],
+    'image/png': ['.png'],
+    'image/gif': ['.gif'],
+    'image/svg+xml': ['.svg']
+};
+
+// הגדרת אחסון הקבצים באמצעות Multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/categories/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5000000 }, // הגבלת גודל קובץ ל-5MB
+    fileFilter: (req, file, cb) => {
+        const fileMimeType = file.mimetype;
+        const fileExtname = path.extname(file.originalname).toLowerCase();
+        
+        const isMimeTypeAllowed = Object.keys(ALLOWED_IMAGE_TYPES).includes(fileMimeType);
+        const isExtnameAllowed = isMimeTypeAllowed && ALLOWED_IMAGE_TYPES[fileMimeType].includes(fileExtname);
+
+        if (isMimeTypeAllowed && isExtnameAllowed) {
+            return cb(null, true);
+        } else {
+            cb(new ApiError(400, 'העלאת קובץ נכשלה. סוגי קבצים מותרים הם תמונות בלבד (JPEG, PNG, GIF, SVG).'));
+        }
+    }
+}).single('categoryImage'); // שם השדה בטופס ה-multipart
 
 // סכימת ולידציה באמצעות Joi
 const categorySchema = Joi.object({
@@ -14,7 +53,13 @@ const createCategory = async (req, res) => {
     if (error) {
         throw new ApiError(400, error.details[0].message);
     }
-    const category = await categoryModel.create(req.body.name);
+
+    let imageUrl = null;
+    if (req.file) {
+        imageUrl = `/uploads/categories/${req.file.filename}`;
+    }
+
+    const category = await categoryModel.create(req.body.name, imageUrl);
     res.status(201).json({
         message: 'הקטגוריה נוספה בהצלחה',
         category
@@ -68,16 +113,33 @@ const getCategoryById = async (req, res) => {
 // עדכון קטגוריה קיימת
 const updateCategory = async (req, res) => {
     const categoryId = req.params.id;
-    // ולידציה: ודא שה-ID הוא מספר תקין
     if (isNaN(categoryId)) {
         throw new ApiError(400, 'מזהה קטגוריה לא תקין');
     }
+
     const { error } = categorySchema.validate(req.body);
     if (error) {
         throw new ApiError(400, error.details[0].message);
     }
 
-    const updatedCategory = await categoryModel.update(categoryId, req.body.name);
+    const { name } = req.body;
+    let imageUrl = req.body.imageUrl || null;
+
+    if (req.file) {
+        imageUrl = `/uploads/categories/${req.file.filename}`;
+        // מחיקת הקובץ הישן אם קיים
+        const oldCategory = await categoryModel.getById(categoryId);
+        if (oldCategory && oldCategory.image_url) {
+            const oldImagePath = path.join(__dirname, '..', oldCategory.image_url);
+            try {
+                await fs.unlink(oldImagePath);
+            } catch (e) {
+                console.error(`Failed to delete old image: ${oldImagePath}`, e);
+            }
+        }
+    }
+    
+    const updatedCategory = await categoryModel.update(categoryId, name, imageUrl);
 
     if (!updatedCategory) {
         throw new ApiError(404, 'הקטגוריה לא נמצאה');
@@ -92,10 +154,25 @@ const updateCategory = async (req, res) => {
 // מחיקת קטגוריה
 const deleteCategory = async (req, res) => {
     const categoryId = req.params.id;
-    // ולידציה: ודא שה-ID הוא מספר תקין
     if (isNaN(categoryId)) {
         throw new ApiError(400, 'מזהה קטגוריה לא תקין');
     }
+
+    const categoryToDelete = await categoryModel.getById(categoryId);
+    if (!categoryToDelete) {
+        throw new ApiError(404, 'הקטגוריה לא נמצאה');
+    }
+
+    // מחיקת קובץ התמונה המשויך
+    if (categoryToDelete.image_url) {
+        const imagePath = path.join(__dirname, '..', categoryToDelete.image_url);
+        try {
+            await fs.unlink(imagePath);
+        } catch (e) {
+            console.error(`Failed to delete image for category: ${categoryId}`, e);
+        }
+    }
+    
     const deletedCategory = await categoryModel.remove(categoryId);
 
     if (!deletedCategory.category) {
@@ -110,6 +187,7 @@ const deleteCategory = async (req, res) => {
 };
 
 module.exports = {
+    upload,
     createCategory: asyncHandler(createCategory),
     getAllCategories: asyncHandler(getAllCategories),
     getCategoryById: asyncHandler(getCategoryById),

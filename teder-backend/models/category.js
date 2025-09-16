@@ -6,7 +6,7 @@ const deviceModel = require('./device');
 
 // קבלת כל הקטגוריות
 const getAll = async (limit, offset, searchTerm) => {
-    let baseQuery = `SELECT * FROM categories`;
+    let baseQuery = `SELECT id, name, image_url FROM categories`; // נתיב התמונה נשלף גם כן
     let countQuery = `SELECT COUNT(*) FROM categories`;
     
     const conditions = [];
@@ -37,19 +37,19 @@ const getAll = async (limit, offset, searchTerm) => {
 
 // קבלת קטגוריה ספציפית לפי ID
 const getById = async (id) => {
-    const result = await db.query('SELECT * FROM categories WHERE id = $1', [id]);
+    const result = await db.query('SELECT id, name, image_url FROM categories WHERE id = $1', [id]); // נתיב התמונה נשלף גם כן
     return result.rows[0];
 };
 
 // יצירת קטגוריה חדשה
-const create = async (name) => {
-    const result = await db.query('INSERT INTO categories (name) VALUES ($1) RETURNING *', [name]);
+const create = async (name, image_url = null) => { // הוספת image_url כפרמטר
+    const result = await db.query('INSERT INTO categories (name, image_url) VALUES ($1, $2) RETURNING *', [name, image_url]);
     return result.rows[0];
 };
 
 // עדכון קטגוריה קיימת
-const update = async (id, name) => {
-    const result = await db.query('UPDATE categories SET name = $1 WHERE id = $2 RETURNING *', [name, id]);
+const update = async (id, name, image_url = null) => { // הוספת image_url כפרמטר
+    const result = await db.query('UPDATE categories SET name = $1, image_url = $2 WHERE id = $3 RETURNING *', [name, image_url, id]);
     return result.rows[0];
 };
 

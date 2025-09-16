@@ -2,17 +2,20 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { register as registerApi, UserCredentials } from "../api/api";
+import { motion } from "framer-motion";
 
 const Register = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
     try {
       const credentials: UserCredentials = { username, password };
       const { token, user } = await registerApi(credentials);
@@ -20,6 +23,8 @@ const Register = () => {
       navigate('/admin');
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאת הרשמה לא ידועה.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -27,7 +32,12 @@ const Register = () => {
     <div dir="rtl" className="relative min-h-screen p-8 bg-cover bg-center" style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}>
       <div className="bg-black bg-opacity-60 w-full h-full absolute inset-0 -z-10" />
       <div className="flex justify-center items-center h-screen">
-        <div className="bg-gray-800 bg-opacity-80 p-8 rounded-lg shadow-2xl w-full max-w-md">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gray-800 bg-opacity-80 p-8 rounded-lg shadow-2xl w-full max-w-md"
+        >
           <h1 className="text-4xl font-bold text-white text-center mb-6">הרשמה</h1>
           {error && <div className="bg-red-500 text-white p-3 rounded mb-4 text-center">{error}</div>}
           <form onSubmit={handleSubmit}>
@@ -59,12 +69,13 @@ const Register = () => {
             </div>
             <button
               type="submit"
-              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-white transition-colors"
+              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-white transition-colors disabled:bg-blue-800 disabled:cursor-not-allowed"
+              disabled={loading}
             >
-              הירשם
+              {loading ? "מרשם..." : "הירשם"}
             </button>
           </form>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

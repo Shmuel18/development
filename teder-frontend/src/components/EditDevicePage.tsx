@@ -127,7 +127,34 @@ const EditDevicePage = () => {
   };
 
   if (loading) {
-    return <div className="text-center text-white py-4">טוען נתוני מכשיר...</div>;
+    return (
+        <div dir="rtl" className="relative min-h-screen p-8 bg-cover bg-center animate-pulse" style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}>
+          <div className="bg-black bg-opacity-60 w-full h-full absolute inset-0 -z-10" />
+          <div className="max-w-4xl mx-auto">
+            <div className="h-10 w-3/4 mb-6 bg-gray-700 rounded-lg mx-auto"></div>
+            
+            <div className="bg-gray-800 bg-opacity-80 p-6 rounded-lg shadow-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div key={index} className="mb-4">
+                    <div className="h-4 w-1/4 mb-2 bg-gray-700 rounded-lg"></div>
+                    <div className="h-10 w-full bg-gray-700 rounded-lg"></div>
+                  </div>
+                ))}
+              </div>
+              <div className="mb-4">
+                <div className="h-4 w-1/4 mb-2 bg-gray-700 rounded-lg"></div>
+                <div className="h-24 w-full bg-gray-700 rounded-lg"></div>
+              </div>
+              <div className="mb-4">
+                  <div className="h-4 w-1/2 mb-2 bg-gray-700 rounded-lg"></div>
+                  <div className="h-10 w-full bg-gray-700 rounded-lg"></div>
+              </div>
+              <div className="h-10 w-40 bg-blue-600/50 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+    );
   }
   
   if (error) {

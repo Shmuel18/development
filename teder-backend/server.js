@@ -27,8 +27,10 @@ app.use(cors());
 app.use(limiter);
 app.use(morgan('dev'));
 
-// הגדרת נתיב סטטי לקבצים המצורפים
+// הגדרת נתיבים סטטיים לקבצים המצורפים
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads/categories', express.static(path.join(__dirname, 'uploads/categories')));
+
 
 app.use('/api/devices', devicesRouter);
 app.use('/api/categories', categoriesRouter);

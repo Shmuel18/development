@@ -14,7 +14,7 @@ const DeviceManagement = () => {
     const [error, setError] = useState<string | null>(null);
 
     // פונקציה כללית לטעינת מכשירים וקטגוריות
-    const getDevicesAndCategories = async () => {
+    const getDevicesAndCategories = async (categoryIdToFetch: number | null) => {
         setLoading(true);
         setError(null);
         if (!token) {
@@ -27,11 +27,11 @@ const DeviceManagement = () => {
             setCategories(fetchedCategories);
 
             // הגדרת קטגוריה ראשונה כברירת מחדל אם אין בחירה
-            const initialCategoryId = selectedCategoryId || fetchedCategories[0]?.id;
-            setSelectedCategoryId(initialCategoryId);
+            const idToUse = categoryIdToFetch || fetchedCategories[0]?.id;
+            setSelectedCategoryId(idToUse);
 
-            if (initialCategoryId) {
-                const result = await fetchDevices(initialCategoryId);
+            if (idToUse) {
+                const result = await fetchDevices(idToUse);
                 setDevices(result.devices);
             } else {
                 setDevices([]);
@@ -46,7 +46,7 @@ const DeviceManagement = () => {
     };
 
     useEffect(() => {
-        getDevicesAndCategories();
+        getDevicesAndCategories(selectedCategoryId);
     }, [token, selectedCategoryId]);
 
     const handleDeleteDevice = async (id: number) => {
@@ -55,8 +55,7 @@ const DeviceManagement = () => {
             await deleteDevice(id, token);
             // רענון הרשימה לאחר המחיקה
             if (selectedCategoryId) {
-                const result = await fetchDevices(selectedCategoryId);
-                setDevices(result.devices);
+                getDevicesAndCategories(selectedCategoryId);
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : "שגיאה במחיקת מכשיר.");
@@ -68,7 +67,30 @@ const DeviceManagement = () => {
     };
 
     if (loading) {
-        return <div className="text-center text-white py-4">טוען מכשירים...</div>;
+        return (
+            <div dir="rtl" className="space-y-4 animate-pulse">
+                <h2 className="text-2xl font-bold text-blue-300 mb-4">ניהול מכשירים קיימים</h2>
+                
+                {/* בורר קטגוריה - שלד */}
+                <div className="mb-4">
+                    <div className="h-4 w-32 bg-gray-700 rounded mb-2"></div>
+                    <div className="h-10 w-full bg-gray-700 rounded-lg"></div>
+                </div>
+                
+                {/* רשימת מכשירים - שלד */}
+                <ul className="space-y-2">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                        <li key={index} className="flex justify-between items-center bg-gray-700 p-3 rounded-lg h-12">
+                            <div className="h-4 w-1/2 bg-gray-600 rounded"></div>
+                            <div className="flex space-x-2">
+                                <div className="h-6 w-6 bg-gray-600 rounded-full"></div>
+                                <div className="h-6 w-6 bg-gray-600 rounded-full"></div>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        );
     }
 
     if (error) {

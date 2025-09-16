@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 const About = () => {
   return (
     <div
@@ -10,7 +12,12 @@ const About = () => {
         <div className="w-full h-full dark:bg-black dark:bg-opacity-60" />
       </div>
 
-      <div className="relative z-10 max-w-3xl shadow-lg rounded-2xl p-8 bg-white/70 dark:bg-[#121826] backdrop-blur-md border border-blue-600">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative z-10 max-w-3xl shadow-lg rounded-2xl p-8 bg-white/70 dark:bg-[#121826] backdrop-blur-md border border-blue-600"
+      >
         <h1 className="text-4xl font-bold text-center mb-6 text-blue-700 dark:text-blue-300 drop-shadow-md">
           אודות האתר "תדר"
         </h1>
@@ -23,7 +30,7 @@ const About = () => {
         <p className="text-lg leading-relaxed text-black dark:text-gray-300">
           האתר ממשיך להתעדכן באופן שוטף, ונשמח לקבל כל משוב, הצעה או מידע נוסף שיסייע לנו לשפר את החוויה.
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };

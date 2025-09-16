@@ -14,6 +14,8 @@ import {
 } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const CategoryManagement = () => {
   const { token } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -23,8 +25,10 @@ const CategoryManagement = () => {
 
   // ניהול קטגוריות
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryImage, setNewCategoryImage] = useState<File | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [editingCategoryImage, setEditingCategoryImage] = useState<File | null>(null);
   
   // ניהול תת-קטגוריות
   const [newSubcategoryName, setNewSubcategoryName] = useState("");
@@ -63,8 +67,9 @@ const CategoryManagement = () => {
         return;
     }
     try {
-        await createCategory(newCategoryName, token);
+        await createCategory(newCategoryName, newCategoryImage, token);
         setNewCategoryName("");
+        setNewCategoryImage(null);
         setError(null);
         getCategoriesAndSubcategories();
     } catch (err) {
@@ -76,9 +81,10 @@ const CategoryManagement = () => {
   const handleUpdateCategory = async (id: number) => {
       if (!token || !editingCategoryName) return;
       try {
-          await updateCategory(id, editingCategoryName, token);
+          await updateCategory(id, editingCategoryName, editingCategoryImage, token);
           setEditingCategoryId(null);
           setEditingCategoryName("");
+          setEditingCategoryImage(null);
           setError(null);
           getCategoriesAndSubcategories();
       } catch (err) {
@@ -144,7 +150,60 @@ const CategoryManagement = () => {
   };
 
   if (loading) {
-    return <div className="text-center text-white py-4">טוען נתונים...</div>;
+    return (
+        <div dir="rtl" className="bg-gray-800 bg-opacity-80 p-6 rounded-lg shadow-2xl animate-pulse">
+            <h2 className="text-3xl font-bold text-white mb-6">ניהול קטגוריות ותת-קטגוריות</h2>
+            
+            <div className="mb-8">
+                <h3 className="text-2xl font-bold text-blue-300 mb-4">יצירת קטגוריה חדשה</h3>
+                <div className="flex flex-col gap-4 mb-6">
+                    <div className="h-10 w-full bg-gray-700 rounded-lg"></div>
+                    <div className="h-10 w-full bg-gray-700 rounded-lg"></div>
+                    <div className="h-12 w-full bg-blue-600/50 rounded-lg"></div>
+                </div>
+                
+                <h3 className="text-2xl font-bold text-blue-300 mb-4">קטגוריות קיימות</h3>
+                <ul className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                        <li key={index} className="flex justify-between items-center bg-gray-700 p-3 rounded-lg h-12">
+                            <div className="h-8 w-8 bg-gray-600 rounded-full"></div>
+                            <div className="h-4 w-1/2 bg-gray-600 rounded"></div>
+                            <div className="flex space-x-2">
+                                <div className="h-6 w-6 bg-gray-600 rounded-full"></div>
+                                <div className="h-6 w-6 bg-gray-600 rounded-full"></div>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            <div>
+                <h3 className="text-2xl font-bold text-blue-300 mb-4">יצירת תת-קטגוריה חדשה</h3>
+                <div className="flex flex-wrap gap-2 mb-6">
+                    <div className="flex-1 min-w-[200px] h-10 bg-gray-700 rounded-lg"></div>
+                    <div className="w-48 h-10 bg-gray-700 rounded-lg"></div>
+                    <div className="h-10 w-12 bg-blue-600/50 rounded-lg"></div>
+                </div>
+                
+                <h3 className="text-2xl font-bold text-blue-300 mb-4">תת-קטגוריות קיימות</h3>
+                <ul className="space-y-2">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                        <li key={index} className="flex justify-between items-center bg-gray-700 p-3 rounded-lg h-12">
+                            <div className="h-4 w-3/4 bg-gray-600 rounded"></div>
+                            <div className="flex space-x-2">
+                                <div className="h-6 w-6 bg-gray-600 rounded-full"></div>
+                                <div className="h-6 w-6 bg-gray-600 rounded-full"></div>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    );
+  }
+  
+  if (error) {
+    return <div className="bg-red-500 text-white p-3 rounded mb-4 text-center">{error}</div>;
   }
   
   return (
@@ -155,7 +214,7 @@ const CategoryManagement = () => {
       {/* יצירה וניהול של קטגוריות */}
       <div className="mb-8">
         <h3 className="text-2xl font-bold text-blue-300 mb-4">יצירת קטגוריה חדשה</h3>
-        <form onSubmit={handleCreateCategory} className="flex gap-2 mb-6">
+        <form onSubmit={handleCreateCategory} className="flex flex-col gap-4 mb-6">
           <input
             type="text"
             placeholder="שם קטגוריה חדשה"
@@ -164,12 +223,18 @@ const CategoryManagement = () => {
             className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          <input 
+            type="file" 
+            accept="image/*" 
+            onChange={(e) => setNewCategoryImage(e.target.files ? e.target.files[0] : null)}
+            className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
           <button
             type="submit"
             className="p-3 bg-blue-600 hover:bg-blue-500 rounded-lg text-white transition-colors"
             title="הוסף קטגוריה"
           >
-            <FaPlusCircle />
+            <FaPlusCircle /> הוסף קטגוריה
           </button>
         </form>
         
@@ -178,40 +243,62 @@ const CategoryManagement = () => {
           {categories.map((cat) => (
             <li key={cat.id} className="flex justify-between items-center bg-gray-700 p-3 rounded-lg">
               {editingCategoryId === cat.id ? (
-                <input
-                  type="text"
-                  value={editingCategoryName}
-                  onChange={(e) => setEditingCategoryName(e.target.value)}
-                  onBlur={() => handleUpdateCategory(cat.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleUpdateCategory(cat.id);
-                    if (e.key === 'Escape') setEditingCategoryId(null);
-                  }}
-                  className="bg-gray-800 text-white p-1 rounded w-full"
-                  autoFocus
-                />
+                <>
+                  <input
+                    type="text"
+                    value={editingCategoryName}
+                    onChange={(e) => setEditingCategoryName(e.target.value)}
+                    className="bg-gray-800 text-white p-1 rounded w-full"
+                    autoFocus
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setEditingCategoryImage(e.target.files ? e.target.files[0] : null)}
+                    className="ml-2 bg-gray-800 text-white p-1 rounded"
+                  />
+                  <button
+                    onClick={() => handleUpdateCategory(cat.id)}
+                    className="ml-2 text-green-400 hover:text-green-200"
+                    title="שמור שינויים"
+                  >
+                    שמור
+                  </button>
+                  <button
+                    onClick={() => setEditingCategoryId(null)}
+                    className="ml-2 text-gray-400 hover:text-gray-200"
+                    title="בטל"
+                  >
+                    בטל
+                  </button>
+                </>
               ) : (
-                <span className="text-lg">{cat.name}</span>
+                <>
+                  <div className="flex items-center gap-2">
+                    {cat.image_url && <img src={`${API_URL}${cat.image_url}`} alt={cat.name} className="h-8 w-8 object-cover rounded-full" />}
+                    <span className="text-lg">{cat.name}</span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                          setEditingCategoryId(cat.id);
+                          setEditingCategoryName(cat.name);
+                      }}
+                      className="text-blue-400 hover:text-blue-200"
+                      title="ערוך קטגוריה"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCategory(cat.id)}
+                      className="text-red-400 hover:text-red-200"
+                      title="מחק קטגוריה"
+                    >
+                      <FaTrashAlt />
+                    </button>
+                  </div>
+                </>
               )}
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                      setEditingCategoryId(cat.id);
-                      setEditingCategoryName(cat.name);
-                  }}
-                  className="text-blue-400 hover:text-blue-200"
-                  title="ערוך קטגוריה"
-                >
-                  <FaEdit />
-                </button>
-                <button
-                  onClick={() => handleDeleteCategory(cat.id)}
-                  className="text-red-400 hover:text-red-200"
-                  title="מחק קטגוריה"
-                >
-                  <FaTrashAlt />
-                </button>
-              </div>
             </li>
           ))}
         </ul>
