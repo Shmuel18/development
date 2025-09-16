@@ -28,7 +28,7 @@ const EditDevicePage = () => {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   // הוספת סטייט חדש עבור תמונת המוצר
-  const [selectedProductImage, setSelectedProductImage] = useState<File | null>(null);
+  const [selectedPrimaryImage, setSelectedPrimaryImage] = useState<File | null>(null);
 
   useEffect(() => {
     const getData = async () => {
@@ -103,7 +103,7 @@ const EditDevicePage = () => {
   
   // פונקציה חדשה לטיפול בקובץ התמונה הראשית
   const handlePrimaryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSelectedProductImage(e.target.files ? e.target.files[0] : null);
+      setSelectedPrimaryImage(e.target.files ? e.target.files[0] : null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,8 +118,8 @@ const EditDevicePage = () => {
 
     try {
       // אם נבחרה תמונה ראשית חדשה, יש לעדכן אותה
-      if (selectedProductImage) {
-        const primaryImageAttachments = await uploadAttachments(parseInt(deviceId), selectedProductImage as unknown as FileList, token);
+      if (selectedPrimaryImage) {
+        const primaryImageAttachments = await uploadAttachments(parseInt(deviceId), [selectedPrimaryImage] as unknown as FileList, token);
         if (primaryImageAttachments.length > 0) {
             formData.image_url = `/uploads/${primaryImageAttachments[0].file_name}`;
         }

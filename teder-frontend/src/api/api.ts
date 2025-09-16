@@ -49,7 +49,7 @@ export interface NewDeviceData {
   description?: string;
   category_id: number;
   subcategory_id?: number | null;
-  image_url?: string;
+  image_url?: string; // השדה החסר
 }
 
 export interface UserCredentials {
