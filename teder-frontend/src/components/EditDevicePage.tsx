@@ -27,6 +27,8 @@ const EditDevicePage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  // הוספת סטייט חדש עבור תמונת המוצר
+  const [selectedProductImage, setSelectedProductImage] = useState<File | null>(null);
 
   useEffect(() => {
     const getData = async () => {
@@ -52,9 +54,9 @@ const EditDevicePage = () => {
             description: fetchedDevice.description,
             category_id: fetchedDevice.category_id,
             subcategory_id: fetchedDevice.subcategory_id,
+            image_url: fetchedDevice.image_url,
           });
           
-          // Fetch subcategories for the current device's category
           const fetchedSubcategories = await fetchSubcategories(fetchedDevice.category_id);
           setSubcategories(fetchedSubcategories);
         } else {
@@ -70,14 +72,12 @@ const EditDevicePage = () => {
     getData();
   }, [deviceId]);
 
-  // Update subcategories when category changes
   useEffect(() => {
     const getSubcategories = async () => {
       if (formData.category_id) {
         try {
           const fetchedSubcategories = await fetchSubcategories(formData.category_id);
           setSubcategories(fetchedSubcategories);
-          // Reset subcategory if it's not in the new list
           if (formData.subcategory_id && !fetchedSubcategories.some(sub => sub.id === formData.subcategory_id)) {
             setFormData(prev => ({ ...prev, subcategory_id: null }));
           }
@@ -100,6 +100,11 @@ const EditDevicePage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(e.target.files);
   };
+  
+  // פונקציה חדשה לטיפול בקובץ התמונה הראשית
+  const handlePrimaryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSelectedProductImage(e.target.files ? e.target.files[0] : null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +117,14 @@ const EditDevicePage = () => {
     }
 
     try {
+      // אם נבחרה תמונה ראשית חדשה, יש לעדכן אותה
+      if (selectedProductImage) {
+        const primaryImageAttachments = await uploadAttachments(parseInt(deviceId), selectedProductImage as unknown as FileList, token);
+        if (primaryImageAttachments.length > 0) {
+            formData.image_url = `/uploads/${primaryImageAttachments[0].file_name}`;
+        }
+      }
+
       await updateDevice(parseInt(deviceId), formData, token);
 
       if (selectedFiles && selectedFiles.length > 0) {
@@ -122,7 +135,7 @@ const EditDevicePage = () => {
       setTimeout(() => navigate(`/device/${deviceId}`), 2000);
     } catch (err) {
       console.error("שגיאה בעדכון מכשיר:", err);
-      setError(err instanceof Error ? err.message : "שגיאה בעדכון המכשיר. אנא נסה שוב.");
+      setError("שגיאה בעדכון המכשיר. אנא נסה שוב.");
     }
   };
 
@@ -231,6 +244,11 @@ const EditDevicePage = () => {
               <label htmlFor="description" className="block text-white text-sm font-bold mb-2">תיאור</label>
               <textarea id="description" name="description" value={formData.description || ''} onChange={handleChange}
                 className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+            <div className="mb-4">
+                <label htmlFor="image_url" className="block text-white text-sm font-bold mb-2">תמונה ראשית</label>
+                <input type="file" id="image_url" name="image_url" accept="image/*" onChange={handlePrimaryImageChange}
+                  className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div className="mb-4">
                 <label htmlFor="attachments" className="block text-white text-sm font-bold mb-2">הוסף קבצים מצורפים חדשים</label>

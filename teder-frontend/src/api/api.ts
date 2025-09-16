@@ -1,11 +1,11 @@
 import { Device } from "../data/devicesData";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'; // תוקן לשימוש במשתנה סביבה
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export interface Category {
   id: number;
   name: string;
-  image_url?: string; // נוסף שדה חדש
+  image_url?: string;
 }
 
 export interface Subcategory {
@@ -34,10 +34,11 @@ export interface DeviceFromApi {
   description?: string;
   category_id: number;
   subcategory_id?: number;
-  image_url?: string; // נוסף שדה חדש לתמונת מכשיר ראשית
+  image_url?: string;
   attachments?: Attachment[];
 }
 
+// תוקן: הוספת image_url לממשק NewDeviceData
 export interface NewDeviceData {
   name: string;
   manufacturer: string;
@@ -48,6 +49,7 @@ export interface NewDeviceData {
   description?: string;
   category_id: number;
   subcategory_id?: number | null;
+  image_url?: string;
 }
 
 export interface UserCredentials {
