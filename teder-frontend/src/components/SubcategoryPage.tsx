@@ -28,7 +28,6 @@ export default function SubcategoryPage() {
             }
 
             try {
-                // ✅ תוקן: קריאה נכונה לפונקציה החדשה
                 const currentSubcategory = await fetchSubcategoryById(subcategoryId);
                 setSubcategory(currentSubcategory);
                 
@@ -47,9 +46,7 @@ export default function SubcategoryPage() {
 
     if (loading) {
         return (
-          // קוד טעינה דומה לזה שב-CategoryPage
-          <div dir="rtl" className="relative min-h-screen bg-cover bg-center animate-pulse px-6 py-12">
-            <div className="absolute inset-0 z-0 dark:bg-black dark:bg-opacity-60" />
+          <div dir="rtl" className="relative min-h-screen px-6 py-12 animate-pulse">
             <div className="relative z-10 max-w-4xl mx-auto">
                 <header className="flex flex-col md:flex-row items-center justify-between mb-6 gap-6">
                     <div className="h-8 w-48 animate-pulse bg-gray-700 rounded-lg"></div>
@@ -69,8 +66,7 @@ export default function SubcategoryPage() {
 
     if (error) {
         return (
-            <div dir="rtl" className="relative min-h-screen text-white text-center px-4 bg-cover bg-center" style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}>
-                <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
+            <div dir="rtl" className="relative min-h-screen text-white text-center px-4">
                 <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
                     <h2 className="text-3xl font-bold mb-4">{error}</h2>
                     <button
@@ -86,14 +82,9 @@ export default function SubcategoryPage() {
 
     return (
         <div
-            className="relative min-h-screen bg-cover bg-center text-black dark:text-white transition-colors duration-300 px-6 py-12"
-            style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}
+            className="relative min-h-screen text-black dark:text-white transition-colors duration-300 px-6 py-12"
             dir="rtl"
         >
-            <div className="absolute inset-0 z-0 transition-opacity duration-300">
-                <div className="w-full h-full dark:bg-black dark:bg-opacity-60" />
-            </div>
-
             <div className="relative z-10">
                 <header className="flex flex-col md:flex-row items-center justify-between mb-6 gap-6">
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-blue-700 dark:text-blue-300 drop-shadow-md">

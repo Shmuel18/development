@@ -4,14 +4,8 @@ const About = () => {
   return (
     <div
       dir="rtl"
-      className="relative min-h-screen text-black dark:text-white flex flex-col items-center py-12 px-4 bg-cover bg-center transition-colors duration-300"
-      style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}
+      className="relative min-h-screen text-black dark:text-white flex flex-col items-center py-12 px-4 transition-colors duration-300"
     >
-      {/* שכבת כהות מופיעה רק במצב לילה */}
-      <div className="absolute inset-0 z-0 transition-opacity duration-300">
-        <div className="w-full h-full dark:bg-black dark:bg-opacity-60" />
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}

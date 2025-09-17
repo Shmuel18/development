@@ -1,16 +1,16 @@
 import { FaBars, FaTimes } from "react-icons/fa";
-import { HiOutlineSun, HiOutlineMoon } from "react-icons/hi"; // אייקונים חדשים
+import { HiOutlineSun, HiOutlineMoon } from "react-icons/hi";
 import { Link } from "react-router-dom";
-import { useDarkMode } from "../hooks/useDarkMode";
+import { useDarkMode } from "../hooks/useDarkMode"; // ✅ ה-hook נשאר רק כדי להשתמש בפונקציית toggle
 import { useState } from "react";
 
 const Header = () => {
-  const [darkMode, setDarkMode] = useDarkMode();
+  const [darkMode, setDarkMode] = useDarkMode(); // ✅ נשאר כדי לאפשר את ה-toggle
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header
-      className="bg-[#0b1120] bg-opacity-95 text-white py-4 px-6 shadow-md flex justify-between items-center sticky top-0 z-50 border-b border-blue-800"
+      className="text-white py-4 px-6 flex justify-between items-center sticky top-0 z-50"
       dir="rtl"
     >
       <div className="flex items-center gap-4">

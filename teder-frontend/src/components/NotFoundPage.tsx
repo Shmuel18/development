@@ -5,14 +5,9 @@ import { motion } from "framer-motion";
 export default function NotFoundPage() {
   return (
     <div
-      className="relative min-h-screen bg-cover bg-center text-black dark:text-white transition-colors duration-300 px-6 py-12 text-center"
-      style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}
+      className="relative min-h-screen text-black dark:text-white transition-colors duration-300 px-6 py-12 text-center"
       dir="rtl"
     >
-      <div className="absolute inset-0 z-0">
-        <div className="w-full h-full dark:bg-black dark:bg-opacity-60" />
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}

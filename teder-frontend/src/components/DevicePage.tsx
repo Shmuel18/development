@@ -48,14 +48,9 @@ export default function DevicePage() {
   if (loading) {
     return (
       <div
-        className="relative min-h-screen bg-cover bg-center text-black dark:text-white transition-colors duration-300 px-6 py-12"
-        style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}
+        className="relative min-h-screen text-black dark:text-white transition-colors duration-300 px-6 py-12"
         dir="rtl"
       >
-        <div className="absolute inset-0 z-0 transition-opacity duration-300">
-          <div className="w-full h-full dark:bg-black dark:bg-opacity-60" />
-        </div>
-
         <div className="relative z-10 max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -101,11 +96,9 @@ export default function DevicePage() {
   if (error || !device) {
     return (
       <div
-        className="relative min-h-screen text-white text-center px-4 bg-cover bg-center"
-        style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}
+        className="relative min-h-screen text-white text-center px-4"
         dir="rtl"
       >
-        <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
         <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
           <h2 className="text-3xl font-bold mb-4">{error || "המכשיר לא נמצא."}</h2>
           <button
@@ -123,14 +116,9 @@ export default function DevicePage() {
 
   return (
     <div
-      className="relative min-h-screen bg-cover bg-center text-black dark:text-white transition-colors duration-300 px-6 py-12"
-      style={{ backgroundImage: "url('/bg-tech-wave.jpg')" }}
+      className="relative min-h-screen text-black dark:text-white transition-colors duration-300 px-6 py-12"
       dir="rtl"
     >
-      <div className="absolute inset-0 z-0 transition-opacity duration-300">
-        <div className="w-full h-full dark:bg-black dark:bg-opacity-60" />
-      </div>
-
       <div className="relative z-10 max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
