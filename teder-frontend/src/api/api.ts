@@ -75,10 +75,7 @@ export async function fetchCategories(): Promise<Category[]> {
   }
 }
 
-export async function fetchSubcategories(categoryId: number | null): Promise<Subcategory[]> {
-    if (!categoryId) {
-        return [];
-    }
+export async function fetchSubcategories(categoryId: number): Promise<Subcategory[]> {
     try {
         const response = await fetch(`${API_URL}/api/subcategories?categoryId=${categoryId}`);
         if (!response.ok) {
@@ -88,6 +85,24 @@ export async function fetchSubcategories(categoryId: number | null): Promise<Sub
         return data.subcategories || [];
     } catch (error) {
         console.error("שגיאה בטעינת תת-קטגוריות מה-API:", error);
+        throw error;
+    }
+}
+
+// ✅ חדש: פונקציה לקבלת תת-קטגוריה בודדת לפי ID שלה
+export async function fetchSubcategoryById(subcategoryId: number): Promise<Subcategory | null> {
+    try {
+        const response = await fetch(`${API_URL}/api/subcategories/${subcategoryId}`);
+        if (!response.ok) {
+            if (response.status === 404) {
+                return null;
+            }
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error(`שגיאה בטעינת תת-קטגוריה עם ID ${subcategoryId} מה-API:`, error);
         throw error;
     }
 }
@@ -112,6 +127,20 @@ export async function fetchDevices(
     };
   } catch (error) {
     console.error("שגיאה בטעינת מכשירים מה-API:", error);
+    throw error;
+  }
+}
+
+export async function fetchDevicesBySubcategoryId(subcategoryId: number, search: string = ""): Promise<DeviceFromApi[]> {
+  try {
+    const response = await fetch(`${API_URL}/api/devices?subcategoryId=${subcategoryId}&search=${search}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.devices || [];
+  } catch (error) {
+    console.error(`שגיאה בטעינת מכשירים עבור תת-קטגוריה ${subcategoryId} מה-API:`, error);
     throw error;
   }
 }

@@ -16,7 +16,7 @@ const ApiError = require('./utils/ApiError');
 // הגדרת Rate Limiter למניעת התקפות Brute-Force
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 300,
+    max: 800,
     standardHeaders: true,
     legacyHeaders: false,
 });

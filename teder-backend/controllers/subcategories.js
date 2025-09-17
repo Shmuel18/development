@@ -22,7 +22,7 @@ const createSubcategory = async (req, res) => {
     });
 };
 
-// קבלת כל תתי-הקטגוריות
+// קבלת כל תתי-הקטגוריות (עם אפשרות סינון לפי categoryId)
 const getAllSubcategories = async (req, res) => {
     // סכימת ולידציה לפרמטרי ה-query
     const querySchema = Joi.object({
