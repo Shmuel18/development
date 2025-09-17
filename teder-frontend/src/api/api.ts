@@ -1,6 +1,6 @@
 import { Device } from "../data/devicesData";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export interface Category {
   id: number;
@@ -38,7 +38,6 @@ export interface DeviceFromApi {
   attachments?: Attachment[];
 }
 
-// תוקן: הוספת image_url לממשק NewDeviceData
 export interface NewDeviceData {
   name: string;
   manufacturer: string;
@@ -49,7 +48,6 @@ export interface NewDeviceData {
   description?: string;
   category_id: number;
   subcategory_id?: number | null;
-  image_url?: string; // השדה החסר
 }
 
 export interface UserCredentials {
@@ -65,7 +63,7 @@ export interface User {
 
 export async function fetchCategories(): Promise<Category[]> {
   try {
-    const response = await fetch(`${API_URL}/categories`);
+    const response = await fetch(`${API_URL}/api/categories`);
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -82,7 +80,7 @@ export async function fetchSubcategories(categoryId: number | null): Promise<Sub
         return [];
     }
     try {
-        const response = await fetch(`${API_URL}/subcategories?categoryId=${categoryId}`);
+        const response = await fetch(`${API_URL}/api/subcategories?categoryId=${categoryId}`);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -102,7 +100,7 @@ export async function fetchDevices(
 ): Promise<{ devices: DeviceFromApi[]; total: number }> {
   try {
     const response = await fetch(
-      `${API_URL}/devices?categoryId=${categoryId}&search=${search}&page=${page}&limit=${limit}`
+      `${API_URL}/api/devices?categoryId=${categoryId}&search=${search}&page=${page}&limit=${limit}`
     );
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -120,7 +118,7 @@ export async function fetchDevices(
 
 export async function fetchDeviceById(deviceId: string): Promise<DeviceFromApi | null> {
   try {
-    const response = await fetch(`${API_URL}/devices/${deviceId}`);
+    const response = await fetch(`${API_URL}/api/devices/${deviceId}`);
     if (!response.ok) {
       if (response.status === 404) {
         return null;
@@ -135,15 +133,14 @@ export async function fetchDeviceById(deviceId: string): Promise<DeviceFromApi |
   }
 }
 
-export async function createDevice(deviceData: NewDeviceData, token: string): Promise<DeviceFromApi> {
+export async function createDevice(formData: FormData, token: string): Promise<DeviceFromApi> {
   try {
-    const response = await fetch(`${API_URL}/devices`, {
+    const response = await fetch(`${API_URL}/api/devices`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(deviceData),
+      body: formData,
     });
     if (!response.ok) {
       const errorText = await response.text();
@@ -164,7 +161,7 @@ export async function uploadAttachments(deviceId: number, files: FileList, token
     }
     
     try {
-        const response = await fetch(`${API_URL}/devices/${deviceId}/attachments`, {
+        const response = await fetch(`${API_URL}/api/devices/${deviceId}/attachments`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -185,9 +182,27 @@ export async function uploadAttachments(deviceId: number, files: FileList, token
     }
 }
 
+export async function deleteAttachment(deviceId: number, attachmentId: number, token: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_URL}/api/devices/${deviceId}/attachments/${attachmentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'שגיאה במחיקת קובץ מצורף.');
+        }
+    } catch (error) {
+        console.error("שגיאה במחיקת קובץ מצורף:", error);
+        throw error;
+    }
+}
+
 export async function login(credentials: UserCredentials): Promise<{ token: string, user: User }> {
   try {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials)
@@ -208,7 +223,7 @@ export async function login(credentials: UserCredentials): Promise<{ token: stri
 
 export async function register(credentials: UserCredentials): Promise<{ token: string, user: User }> {
     try {
-        const response = await fetch(`${API_URL}/auth/register`, {
+        const response = await fetch(`${API_URL}/api/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials)
@@ -227,7 +242,6 @@ export async function register(credentials: UserCredentials): Promise<{ token: s
     }
 }
 
-// פונקציות חדשות ליצירה, עדכון ומחיקה של קטגוריות
 export async function createCategory(name: string, imageFile: File | null, token: string): Promise<Category> {
   const formData = new FormData();
   formData.append('name', name);
@@ -236,7 +250,7 @@ export async function createCategory(name: string, imageFile: File | null, token
   }
 
   try {
-    const response = await fetch(`${API_URL}/categories`, {
+    const response = await fetch(`${API_URL}/api/categories`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -263,7 +277,7 @@ export async function updateCategory(id: number, name: string, imageFile: File |
     }
     
     try {
-        const response = await fetch(`${API_URL}/categories/${id}`, {
+        const response = await fetch(`${API_URL}/api/categories/${id}`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -284,7 +298,7 @@ export async function updateCategory(id: number, name: string, imageFile: File |
 
 export async function deleteCategory(id: number, token: string): Promise<void> {
     try {
-        const response = await fetch(`${API_URL}/categories/${id}`, {
+        const response = await fetch(`${API_URL}/api/categories/${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -302,7 +316,7 @@ export async function deleteCategory(id: number, token: string): Promise<void> {
 
 export async function createSubcategory(name: string, categoryId: number, token: string): Promise<Subcategory> {
   try {
-    const response = await fetch(`${API_URL}/subcategories`, {
+    const response = await fetch(`${API_URL}/api/subcategories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -324,7 +338,7 @@ export async function createSubcategory(name: string, categoryId: number, token:
 
 export async function updateSubcategory(id: number, name: string, categoryId: number, token: string): Promise<Subcategory> {
     try {
-        const response = await fetch(`${API_URL}/subcategories/${id}`, {
+        const response = await fetch(`${API_URL}/api/subcategories/${id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -344,33 +358,14 @@ export async function updateSubcategory(id: number, name: string, categoryId: nu
     }
 }
 
-export async function deleteSubcategory(id: number, token: string): Promise<void> {
-    try {
-        const response = await fetch(`${API_URL}/subcategories/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'שגיאה במחיקת תת-קטגוריה');
-        }
-    } catch (error) {
-        console.error("שגיאה במחיקת תת-קטגוריה:", error);
-        throw error;
-    }
-}
-
-export async function updateDevice(deviceId: number, deviceData: Partial<NewDeviceData>, token: string): Promise<DeviceFromApi> {
+export async function updateDevice(deviceId: number, formData: FormData, token: string): Promise<DeviceFromApi> {
   try {
-    const response = await fetch(`${API_URL}/devices/${deviceId}`, {
+    const response = await fetch(`${API_URL}/api/devices/${deviceId}`, {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(deviceData),
+      body: formData,
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -386,7 +381,7 @@ export async function updateDevice(deviceId: number, deviceData: Partial<NewDevi
 
 export async function deleteDevice(deviceId: number, token: string): Promise<void> {
   try {
-    const response = await fetch(`${API_URL}/devices/${deviceId}`, {
+    const response = await fetch(`${API_URL}/api/devices/${deviceId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -4,31 +4,36 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
-const path = require('path'); // ייבוא ספריית path
+const path = require('path');
 const port = process.env.PORT || 3000;
 const devicesRouter = require('./routes/devices');
 const categoriesRouter = require('./routes/categories');
 const subcategoriesRouter = require('./routes/subcategories');
 const attachmentsRouter = require('./routes/attachments');
-const authRouter = require('./routes/auth'); // ייבוא הראוטר החדש לאימות
+const authRouter = require('./routes/auth');
 const ApiError = require('./utils/ApiError');
 
 // הגדרת Rate Limiter למניעת התקפות Brute-Force
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 דקות
-    max: 300, // הגבלה של 300 בקשות ל-IP בפרק הזמן
+    windowMs: 15 * 60 * 1000,
+    max: 300,
     standardHeaders: true,
     legacyHeaders: false,
 });
 
 app.use(express.json());
-app.use(helmet());
 app.use(cors());
+// הסרת helmet גלובלית כדי להשתמש בהגדרה ספציפית
+// app.use(helmet()); 
 app.use(limiter);
 app.use(morgan('dev'));
 
 // הגדרת נתיבים סטטיים לקבצים המצורפים
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// שינוי: הגדרת helmet ספציפית לתיקיית uploads
+app.use('/uploads', helmet({
+  crossOriginResourcePolicy: false, // מאפשר טעינת משאבים ממקורות שונים
+}), express.static(path.join(__dirname, 'uploads')));
+
 app.use('/uploads/categories', express.static(path.join(__dirname, 'uploads/categories')));
 
 
@@ -36,7 +41,7 @@ app.use('/api/devices', devicesRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/subcategories', subcategoriesRouter);
 app.use('/api', attachmentsRouter);
-app.use('/api/auth', authRouter); // שימוש בראוטר החדש
+app.use('/api/auth', authRouter);
 
 app.get('/', (req, res) => {
     res.send('ברוכים הבאים לבק-אנד של "תדר"!');

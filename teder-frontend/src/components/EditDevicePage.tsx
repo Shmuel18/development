@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { FaTrashAlt } from "react-icons/fa";
 import {
   fetchDeviceById,
   updateDevice,
   uploadAttachments,
   fetchCategories,
   fetchSubcategories,
+  deleteAttachment,
   DeviceFromApi,
   Category,
   Subcategory,
   NewDeviceData,
 } from "../api/api";
 import { useAuth } from "../context/AuthContext";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const EditDevicePage = () => {
   const { deviceId } = useParams();
@@ -27,49 +31,47 @@ const EditDevicePage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  // הוספת סטייט חדש עבור תמונת המוצר
   const [selectedPrimaryImage, setSelectedPrimaryImage] = useState<File | null>(null);
 
-  useEffect(() => {
-    const getData = async () => {
-      if (!deviceId) return;
+  const getDeviceAndCategories = async () => {
+    if (!deviceId) return;
 
-      try {
-        const [fetchedCategories, fetchedDevice] = await Promise.all([
-          fetchCategories(),
-          fetchDeviceById(deviceId)
-        ]);
+    try {
+      const [fetchedCategories, fetchedDevice] = await Promise.all([
+        fetchCategories(),
+        fetchDeviceById(deviceId)
+      ]);
+      
+      setCategories(fetchedCategories);
+      if (fetchedDevice) {
+        setDevice(fetchedDevice);
+        setFormData({
+          name: fetchedDevice.name,
+          manufacturer: fetchedDevice.manufacturer,
+          model: fetchedDevice.model,
+          frequency_range: fetchedDevice.frequency_range,
+          year: fetchedDevice.year,
+          security_classification: fetchedDevice.security_classification,
+          description: fetchedDevice.description,
+          category_id: fetchedDevice.category_id,
+          subcategory_id: fetchedDevice.subcategory_id,
+        });
         
-        setCategories(fetchedCategories);
-        if (fetchedDevice) {
-          setDevice(fetchedDevice);
-          // Pre-populate form data
-          setFormData({
-            name: fetchedDevice.name,
-            manufacturer: fetchedDevice.manufacturer,
-            model: fetchedDevice.model,
-            frequency_range: fetchedDevice.frequency_range,
-            year: fetchedDevice.year,
-            security_classification: fetchedDevice.security_classification,
-            description: fetchedDevice.description,
-            category_id: fetchedDevice.category_id,
-            subcategory_id: fetchedDevice.subcategory_id,
-            image_url: fetchedDevice.image_url,
-          });
-          
-          const fetchedSubcategories = await fetchSubcategories(fetchedDevice.category_id);
-          setSubcategories(fetchedSubcategories);
-        } else {
-          setError("המכשיר לא נמצא.");
-        }
-        setLoading(false);
-      } catch (err) {
-        console.error("שגיאה בטעינת נתוני המכשיר:", err);
-        setError("שגיאה בטעינת נתוני המכשיר.");
-        setLoading(false);
+        const fetchedSubcategories = await fetchSubcategories(fetchedDevice.category_id);
+        setSubcategories(fetchedSubcategories);
+      } else {
+        setError("המכשיר לא נמצא.");
       }
-    };
-    getData();
+      setLoading(false);
+    } catch (err) {
+      console.error("שגיאה בטעינת נתוני המכשיר:", err);
+      setError("שגיאה בטעינת נתוני המכשיר.");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getDeviceAndCategories();
   }, [deviceId]);
 
   useEffect(() => {
@@ -101,7 +103,6 @@ const EditDevicePage = () => {
     setSelectedFiles(e.target.files);
   };
   
-  // פונקציה חדשה לטיפול בקובץ התמונה הראשית
   const handlePrimaryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSelectedPrimaryImage(e.target.files ? e.target.files[0] : null);
   };
@@ -117,18 +118,20 @@ const EditDevicePage = () => {
     }
 
     try {
-      // אם נבחרה תמונה ראשית חדשה, יש לעדכן אותה
+      const form = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+          if (value !== undefined) {
+              form.append(key, String(value));
+          }
+      });
       if (selectedPrimaryImage) {
-        const primaryImageAttachments = await uploadAttachments(parseInt(deviceId), [selectedPrimaryImage] as unknown as FileList, token);
-        if (primaryImageAttachments.length > 0) {
-            formData.image_url = `/uploads/${primaryImageAttachments[0].file_name}`;
-        }
+          form.append('primaryImage', selectedPrimaryImage);
       }
-
-      await updateDevice(parseInt(deviceId), formData, token);
+      
+      const updatedDevice = await updateDevice(parseInt(deviceId), form, token);
 
       if (selectedFiles && selectedFiles.length > 0) {
-        await uploadAttachments(parseInt(deviceId), selectedFiles, token);
+        await uploadAttachments(updatedDevice.id, selectedFiles, token);
       }
       
       setSuccess(true);
@@ -136,6 +139,20 @@ const EditDevicePage = () => {
     } catch (err) {
       console.error("שגיאה בעדכון מכשיר:", err);
       setError("שגיאה בעדכון המכשיר. אנא נסה שוב.");
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: number, originalName: string) => {
+    if (!token || !deviceId || !window.confirm(`האם אתה בטוח שברצונך למחוק את הקובץ: ${originalName}?`)) {
+      return;
+    }
+    try {
+      await deleteAttachment(parseInt(deviceId), attachmentId, token);
+      // רענן את נתוני המכשיר כדי להציג את הרשימה המעודכנת
+      getDeviceAndCategories();
+    } catch (err) {
+      console.error("שגיאה במחיקת קובץ מצורף:", err);
+      setError("שגיאה במחיקת הקובץ המצורף. אנא נסה שוב.");
     }
   };
 
@@ -255,6 +272,39 @@ const EditDevicePage = () => {
                 <input type="file" id="attachments" name="attachments" multiple onChange={handleFileChange}
                   className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
+
+            {/* קטע חדש: הצגת קבצים מצורפים קיימים עם כפתור מחיקה */}
+            {device?.attachments && device.attachments.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-3 text-blue-700 dark:text-blue-300">קבצים מצורפים קיימים</h2>
+                <div className="space-y-3">
+                  {device.attachments.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center justify-between p-4 bg-gray-100 dark:bg-[#1a1f2e] rounded-xl shadow-md"
+                    >
+                      <a
+                        href={`${API_URL}/uploads/${attachment.file_name}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-gray-900 dark:text-white"
+                      >
+                        <span className="font-medium">{attachment.original_name}</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAttachment(attachment.id, attachment.original_name)}
+                        className="text-red-400 hover:text-red-200"
+                        title="מחק קובץ"
+                      >
+                        <FaTrashAlt />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
               עדכן מכשיר
             </button>
