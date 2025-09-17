@@ -358,6 +358,24 @@ export async function updateSubcategory(id: number, name: string, categoryId: nu
     }
 }
 
+export async function deleteSubcategory(id: number, token: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_URL}/api/subcategories/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'שגיאה במחיקת תת-קטגוריה');
+        }
+    } catch (error) {
+        console.error("שגיאה במחיקת תת-קטגוריה:", error);
+        throw error;
+    }
+}
+
 export async function updateDevice(deviceId: number, formData: FormData, token: string): Promise<DeviceFromApi> {
   try {
     const response = await fetch(`${API_URL}/api/devices/${deviceId}`, {

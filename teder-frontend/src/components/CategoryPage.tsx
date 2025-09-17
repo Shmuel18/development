@@ -152,7 +152,7 @@ export default function CategoryPage() {
               className="bg-white/70 backdrop-blur-md dark:bg-[#121826] text-black dark:text-white rounded-2xl border border-blue-600 shadow-xl hover:shadow-2xl p-4 flex flex-col items-center text-center cursor-pointer transition duration-300"
             >
               <img
-                src="https://dummyimage.com/150x150/000/fff&text=No+Image"
+                src={device.image_url ? `${API_URL}${device.image_url}` : "https://dummyimage.com/150x150/000/fff&text=No+Image"}
                 alt={device.name}
                 className="w-full h-40 sm:h-48 md:h-56 mb-4 rounded-lg object-cover border border-blue-500 shadow-md"
               />

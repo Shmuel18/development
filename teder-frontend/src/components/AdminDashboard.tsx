@@ -23,6 +23,7 @@ const AdminDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [selectedPrimaryImage, setSelectedPrimaryImage] = useState<File | null>(null); // ✅ נוסף: מצב לקובץ התמונה הראשי
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("addDevice");
@@ -65,12 +66,17 @@ const AdminDashboard = () => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value === "" ? undefined : name === 'category_id' || name === 'subcategory_id' || name === 'year' ? parseInt(value) : value,
+      [name]: value === "" ? null : name === 'category_id' || name === 'subcategory_id' || name === 'year' ? parseInt(value) : value,
     }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(e.target.files);
+  };
+  
+  // ✅ נוסף: פונקציה לטיפול בשינוי קובץ תמונה ראשי
+  const handlePrimaryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSelectedPrimaryImage(e.target.files ? e.target.files[0] : null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,7 +90,19 @@ const AdminDashboard = () => {
     }
 
     try {
-      const newDevice = await createDevice(formData, token);
+      const form = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+              form.append(key, String(value));
+          }
+      });
+      
+      // ✅ נוסף: צירוף הקובץ שנבחר לאובייקט FormData
+      if (selectedPrimaryImage) {
+        form.append('primaryImage', selectedPrimaryImage);
+      }
+
+      const newDevice = await createDevice(form, token);
 
       if (selectedFiles && selectedFiles.length > 0) {
         await uploadAttachments(newDevice.id, selectedFiles, token);
@@ -233,11 +251,26 @@ const AdminDashboard = () => {
                     <textarea id="description" name="description" value={formData.description} onChange={handleChange}
                       className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                   </div>
+                  
+                  {/* ✅ נוסף: שדה קלט לתמונה ראשית */}
+                  <div className="mb-4">
+                      <label htmlFor="primaryImage" className="block text-white text-sm font-bold mb-2">תמונה ראשית</label>
+                      <input 
+                          type="file" 
+                          id="primaryImage" 
+                          name="primaryImage" 
+                          accept="image/*" 
+                          onChange={handlePrimaryImageChange}
+                          className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      />
+                  </div>
+
                   <div className="mb-4">
                       <label htmlFor="attachments" className="block text-white text-sm font-bold mb-2">קבצים מצורפים</label>
                       <input type="file" id="attachments" name="attachments" multiple onChange={handleFileChange}
                         className="w-full px-3 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
+                  </div>
+
                   <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
                     הוסף מכשיר
                   </button>
